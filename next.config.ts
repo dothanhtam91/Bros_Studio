@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Keep large deps out of serverless bundle (avoids Vercel 250 MB limit)
+  serverExternalPackages: [
+    "sharp",
+    "@google/generative-ai",
+    "googleapis",
+    "@aws-sdk/client-s3",
+    "archiver",
+  ],
   images: {
     remotePatterns: [
       {
