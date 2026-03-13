@@ -15,8 +15,8 @@ export function VideoHero() {
         poster="/hero-poster.jpg"
         aria-hidden
       >
-        <source src="/hero-video.mov" type="video/quicktime" />
-        <source src="/hero-video.mp4" type="video/mp4" />
+        <source src="/Hero-video.mov" type="video/quicktime" />
+        <source src="/Hero-video.mp4" type="video/mp4" />
       </video>
       <div
         className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
