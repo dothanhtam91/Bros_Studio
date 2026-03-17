@@ -529,7 +529,7 @@ export function AdminJobDetail({
                   </div>
                   {step.action && (
                     <>
-                      {"href" in step.action ? (
+                      {"href" in step.action && step.action.href ? (
                         <Link
                           href={step.action.href}
                           className="shrink-0 rounded-lg border border-amber-200/90 bg-amber-50 px-3 py-1.5 text-sm font-medium text-stone-800 transition hover:bg-amber-100/90"
