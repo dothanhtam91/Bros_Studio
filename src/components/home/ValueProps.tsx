@@ -1,70 +1,132 @@
 "use client";
 
-import Link from "next/link";
-import { IconClock, IconImage, IconLayers, IconSparkles } from "./icons";
+import { useRef, useState, useEffect } from "react";
+import { IconCalendar, IconCamera, IconCpu, IconZap } from "./icons";
 
-const valueProps = [
+const STEPS = [
   {
-    title: "Next-Day Delivery",
-    subtitle: "24–48 hour turnaround",
-    description: "Fast turnaround so you can list your Houston property sooner.",
-    icon: IconClock,
-    color: "from-amber-500 to-orange-600",
+    step: "01",
+    title: "Book Instantly",
+    description: "Book online, no back-and-forth.",
+    icon: IconCalendar,
   },
   {
-    title: "High Quality Media",
-    subtitle: "MLS-Ready Photos & Videos",
-    description: "Professional real estate photos and videos that attract buyers.",
-    icon: IconImage,
-    color: "from-blue-500 to-indigo-600",
+    step: "02",
+    title: "Shoot With Confidence",
+    description: "Professional shoots, consistent quality.",
+    icon: IconCamera,
   },
   {
-    title: "Friendly Service",
-    subtitle: "Clear updates & support",
-    description: "Reliable team with clear updates and personal support.",
-    icon: IconLayers,
-    color: "from-emerald-500 to-teal-600",
+    step: "03",
+    title: "AI-Powered Workflow",
+    description: "Streamline delivery, files, and updates.",
+    icon: IconCpu,
   },
   {
-    title: "Full Spectrum",
-    subtitle: "All-In-One Listing Media",
-    description: "Complete real estate media solutions, from photos to delivery.",
-    icon: IconSparkles,
-    color: "from-violet-500 to-purple-600",
+    step: "04",
+    title: "Deliver Faster",
+    description: "Polished assets—listings go live sooner.",
+    icon: IconZap,
   },
 ];
 
+const STEP_DELAYS = ["0.12s", "0.2s", "0.28s", "0.36s"];
+
 export function ValueProps() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+  const hasStartedRef = useRef(false);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && !hasStartedRef.current) {
+          hasStartedRef.current = true;
+          setInView(true);
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+    obs.observe(section);
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <section className="bg-zinc-50 py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-          Why Houston Realtors Choose BrosStudio
-        </h2>
-        <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {valueProps.map(({ title, subtitle, description, icon: Icon, color }, i) => (
-            <div
-              key={title}
-              className="group rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-zinc-300 hover:shadow-lg animate-fade-in-up opacity-0"
-              style={{ animationDelay: `${0.1 * (i + 1)}s` }}
-            >
-              <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${color} shadow-lg transition group-hover:scale-110`}>
-                <Icon className="h-7 w-7 text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-900">{title}</h3>
-              <p className="mt-1 text-sm font-semibold text-zinc-600">{subtitle}</p>
-              <p className="mt-3 text-sm text-zinc-600">{description}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-16 text-center">
-          <Link
-            href="/book"
-            className="group inline-flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200/90 px-6 py-3 text-sm font-semibold text-stone-800 shadow-lg transition hover:bg-amber-100/90 hover:shadow-xl active:scale-100"
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden border-y border-zinc-200/80 bg-white py-12 sm:py-14"
+    >
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <header className="text-center">
+          <p
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500"
+            style={
+              inView
+                ? { animation: "value-props-reveal 0.55s ease-out 0ms both" }
+                : { opacity: 0 }
+            }
           >
-            Book a shoot
-            <span className="transition group-hover:translate-x-0.5">→</span>
-          </Link>
+            Why Realtors Choose BrosStudio
+          </p>
+          <h2
+            className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl"
+            style={
+              inView
+                ? { animation: "value-props-reveal 0.55s ease-out 0.08s both" }
+                : { opacity: 0 }
+            }
+          >
+            Smarter media, start to finish
+          </h2>
+          <p
+            className="mx-auto mt-1.5 max-w-lg text-sm text-zinc-600"
+            style={
+              inView
+                ? { animation: "value-props-reveal 0.55s ease-out 0.16s both" }
+                : { opacity: 0 }
+            }
+          >
+            Premium media plus AI workflow tools—move faster, stay organized.
+          </p>
+        </header>
+
+        {/* Compact horizontal strip — 4 items in one row */}
+        <div className="mt-8 sm:mt-10">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.step}
+                  className="group flex items-start gap-3 rounded-xl border border-zinc-200/70 bg-zinc-50/50 px-4 py-3.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-amber-200/80 hover:bg-amber-50/30 hover:shadow-md hover:shadow-amber-950/5 sm:py-4"
+                  style={
+                    inView
+                      ? {
+                          animation: `workflow-step-reveal 0.5s ease-out ${STEP_DELAYS[i]} both`,
+                        }
+                      : { opacity: 0 }
+                  }
+                >
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-amber-600 shadow-sm ring-1 ring-zinc-200/80 transition-transform duration-300 group-hover:scale-110 group-hover:ring-amber-200/60">
+                    <Icon className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                      {item.step}
+                    </p>
+                    <h3 className="font-semibold tracking-tight text-zinc-900 text-[15px]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-0.5 text-xs leading-snug text-zinc-600">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

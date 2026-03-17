@@ -11,8 +11,9 @@ export function ConditionalSiteChrome({
 }) {
   const pathname = usePathname();
   const isDeliveryPreview = pathname?.startsWith("/delivery-preview");
+  const isDeliveryPage = pathname?.startsWith("/delivery/");
 
-  if (isDeliveryPreview) {
+  if (isDeliveryPreview || isDeliveryPage) {
     return <>{children}</>;
   }
 

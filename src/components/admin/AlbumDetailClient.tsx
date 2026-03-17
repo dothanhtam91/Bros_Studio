@@ -40,13 +40,44 @@ export function AlbumDetailClient({
     if (!files?.length) return;
     setUploading(true);
     setUploadError(null);
-    const formData = new FormData();
-    Array.from(files).forEach((f) => formData.append("files", f));
+    const fileList = Array.from(files);
     try {
-      const res = await fetch(`/api/admin/albums/${albumId}/images`, { method: "POST", body: formData });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setUploadError((data.error as string) || `Upload failed (${res.status})`);
+      // 1) Get presigned URLs (avoids Vercel 4.5 MB body limit)
+      const presignRes = await fetch(`/api/admin/albums/${albumId}/images/presign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files: fileList.map((f) => ({ name: f.name, type: f.type })) }),
+      });
+      const presignData = await presignRes.json().catch(() => ({}));
+      if (!presignRes.ok) {
+        setUploadError((presignData.error as string) || `Upload failed (${presignRes.status})`);
+        return;
+      }
+      const { uploads } = presignData as { uploads: { key: string; url: string; contentType: string }[] };
+      if (!uploads?.length) {
+        setUploadError("No valid images. Use .jpg, .png, .webp, or .gif.");
+        return;
+      }
+      // 2) Upload each file directly to R2
+      for (let i = 0; i < uploads.length; i++) {
+        const u = uploads[i];
+        const file = fileList[i];
+        if (!file) continue;
+        const putRes = await fetch(u.url, { method: "PUT", body: file, headers: { "Content-Type": u.contentType } });
+        if (!putRes.ok) {
+          setUploadError(`Upload failed for ${file.name}`);
+          return;
+        }
+      }
+      // 3) Confirm and insert into DB
+      const confirmRes = await fetch(`/api/admin/albums/${albumId}/images/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keys: uploads.map((x) => x.key) }),
+      });
+      const confirmData = await confirmRes.json().catch(() => ({}));
+      if (!confirmRes.ok) {
+        setUploadError((confirmData.error as string) || "Confirm failed");
         return;
       }
       if (inputRef.current) inputRef.current.value = "";

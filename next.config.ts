@@ -7,7 +7,12 @@ const nextConfig: NextConfig = {
     "@google/generative-ai",
     "googleapis",
     "@aws-sdk/client-s3",
+    "@aws-sdk/s3-request-presigner",
     "archiver",
+    "stripe",
+    "resend",
+    "@supabase/supabase-js",
+    "@supabase/ssr",
   ],
   images: {
     remotePatterns: [

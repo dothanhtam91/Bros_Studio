@@ -1,6 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import slugifyAddress from "./slugify";
 
+function slugifyPerson(s: string): string {
+  return (s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40) || "client";
+}
+
 export const JOB_STATUSES = [
   "new_booking",
   "pending_confirmation",
@@ -40,7 +49,6 @@ export interface BookingPayload {
   listing_title?: string | null;
   service_type?: string | null;
   preferred_shooting_date?: string | null;
-  preferred_delivery_deadline?: string | null;
   notes?: string | null;
   estimated_price?: number | null;
 }
@@ -101,6 +109,47 @@ export async function matchRealtorFromBooking(
 }
 
 /**
+ * Find an existing customer by email (used when no realtor match).
+ */
+export async function findCustomerByEmail(
+  admin: SupabaseClient,
+  email: string
+): Promise<{ id: string } | null> {
+  const normalized = email?.trim().toLowerCase();
+  if (!normalized) return null;
+  const { data } = await admin
+    .from("customers")
+    .select("id")
+    .ilike("email", normalized)
+    .limit(1)
+    .maybeSingle();
+  return data ? { id: data.id } : null;
+}
+
+/**
+ * Find or create a customer for a website booking when no realtor matches.
+ */
+export async function findOrCreateCustomerFromBooking(
+  admin: SupabaseClient,
+  payload: BookingPayload
+): Promise<{ id: string }> {
+  const existing = await findCustomerByEmail(admin, payload.email);
+  if (existing) return existing;
+  const { data: customer, error } = await admin
+    .from("customers")
+    .insert({
+      name: payload.customer_name,
+      email: payload.email,
+      phone: payload.phone || null,
+      company: payload.company_name || null,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: customer.id };
+}
+
+/**
  * Find an album by realtor_id + address + shoot_date, or create one.
  */
 export async function findOrCreateAlbumForJob(
@@ -109,7 +158,7 @@ export async function findOrCreateAlbumForJob(
   address: string,
   shootDate: string | null
 ): Promise<{ id: string; slug: string }> {
-  const slugBase = slugifyAddress(address);
+  const slugBase = slugifyAddress(address).slice(0, 60) || "property";
   const shoot = shootDate ? new Date(shootDate) : null;
   const dateStr = shoot ? shoot.toISOString().slice(0, 10) : null;
 
@@ -146,6 +195,40 @@ export async function findOrCreateAlbumForJob(
     .select("id, slug")
     .single();
 
+  if (error) throw new Error(error.message);
+  return { id: row.id, slug: row.slug };
+}
+
+/** Create a realtor from a customer so we can create an album (albums require realtor_id). Used when confirming shooting for customer-only jobs. Reuses existing realtor if one exists for this email. */
+export async function createRealtorFromCustomer(
+  admin: SupabaseClient,
+  customer: { id: string; name: string; email: string; phone?: string | null; company?: string | null }
+): Promise<{ id: string; slug: string }> {
+  const email = customer.email.trim().toLowerCase();
+  const { data: existingRealtor } = await admin
+    .from("realtors")
+    .select("id, slug")
+    .ilike("email", email)
+    .limit(1)
+    .maybeSingle();
+  if (existingRealtor) return { id: existingRealtor.id, slug: existingRealtor.slug };
+
+  const baseSlug = slugifyPerson(customer.name) || slugifyPerson(customer.email.split("@")[0]) || "client";
+  let slug = `${baseSlug}-${customer.id.slice(0, 8)}`;
+  const { data: slugTaken } = await admin.from("realtors").select("id").eq("slug", slug).maybeSingle();
+  if (slugTaken) slug = `${baseSlug}-${Date.now().toString(36)}`;
+
+  const { data: row, error } = await admin
+    .from("realtors")
+    .insert({
+      slug,
+      name: customer.name.trim() || "Client",
+      email,
+      phone: customer.phone?.trim() || null,
+      brokerage: customer.company?.trim() || null,
+    })
+    .select("id, slug")
+    .single();
   if (error) throw new Error(error.message);
   return { id: row.id, slug: row.slug };
 }

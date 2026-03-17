@@ -25,6 +25,7 @@ Use this when setting **Project → Settings → Environment Variables** in Verc
 
 | Variable | Notes | Scopes |
 |----------|--------|--------|
+| `RESEND_FROM_EMAIL` | Sender for delivery emails, e.g. `BrosStudio <noreply@bros-photo.com>`. Required for sending to customers: Resend’s default `onboarding@resend.dev` only allows sending to your own email. Verify your domain in Resend, then set this. | Production, Preview, Development |
 | `GEMINI_API_KEY` | AI social caption — **secret** | Production, Preview, Development |
 | `OPENAI_API_KEY` | Admin AI description/captions — **secret** | Production, Preview, Development |
 | `CONTACT_EMAIL` | Where contact form sends (defaults to hello@example.com) | Production, Preview, Development |

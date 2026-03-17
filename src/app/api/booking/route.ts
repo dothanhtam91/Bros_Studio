@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { matchRealtorFromBooking, findOrCreateAlbumForJob } from "@/lib/jobs";
+import { matchRealtorFromBooking, findOrCreateCustomerFromBooking } from "@/lib/jobs";
+import { getTravelForAddress } from "@/lib/travel";
+import { computePricingBreakdown } from "@/lib/pricing";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -13,10 +15,13 @@ export async function POST(request: Request) {
     property_address,
     listing_title,
     service_type,
+    sq_ft,
+    package_id,
+    is_airbnb,
+    additional_request_fee,
     preferred_shooting_date,
-    preferred_delivery_deadline,
+    time_windows,
     notes,
-    estimated_price,
   } = body as {
     customer_name?: string | null;
     email?: string | null;
@@ -26,10 +31,13 @@ export async function POST(request: Request) {
     property_address?: string | null;
     listing_title?: string | null;
     service_type?: string | null;
+    sq_ft?: number | null;
+    package_id?: string | null;
+    is_airbnb?: boolean;
+    additional_request_fee?: number | null;
     preferred_shooting_date?: string | null;
-    preferred_delivery_deadline?: string | null;
+    time_windows?: string | null;
     notes?: string | null;
-    estimated_price?: number | null;
   };
 
   if (!property_address?.trim()) {
@@ -41,7 +49,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  const { travelFee } = await getTravelForAddress(property_address.trim());
+  const additionalNum = Math.max(0, Number(additional_request_fee) || 0);
+  const breakdown = computePricingBreakdown({
+    packageId: package_id || "2",
+    isAirbnb: Boolean(is_airbnb),
+    travelFee,
+    additionalRequestFee: additionalNum,
+  });
+
   const payload = {
     customer_name: name,
     email: emailTrim,
@@ -52,38 +68,25 @@ export async function POST(request: Request) {
     listing_title: listing_title?.trim() || null,
     service_type: service_type?.trim() || null,
     preferred_shooting_date: preferred_shooting_date || null,
-    preferred_delivery_deadline: preferred_delivery_deadline || null,
     notes: notes?.trim() || null,
-    estimated_price: estimated_price != null ? Number(estimated_price) : null,
+    sq_ft: sq_ft != null ? Number(sq_ft) : null,
+    package_id: package_id || null,
+    is_airbnb: Boolean(is_airbnb),
+    additional_request_fee: additionalNum,
+    time_windows: time_windows?.trim() || null,
+    estimated_price: breakdown.total,
   };
 
+  const admin = createAdminClient();
   const matched = await matchRealtorFromBooking(admin, payload);
   let realtorId: string | null = null;
   let customerId: string | null = null;
-  let albumId: string | null = null;
   let needsReview = false;
 
   if (matched) {
     realtorId = matched.realtor_id;
-    const album = await findOrCreateAlbumForJob(
-      admin,
-      matched.realtor_id,
-      payload.property_address,
-      payload.preferred_shooting_date || null
-    );
-    albumId = album.id;
   } else {
-    const { data: customer, error: custErr } = await admin
-      .from("customers")
-      .insert({
-        name: payload.customer_name,
-        email: payload.email,
-        phone: payload.phone,
-        company: payload.company_name,
-      })
-      .select("id")
-      .single();
-    if (custErr) return NextResponse.json({ error: custErr.message }, { status: 500 });
+    const customer = await findOrCreateCustomerFromBooking(admin, payload);
     customerId = customer.id;
     needsReview = true;
   }
@@ -94,13 +97,13 @@ export async function POST(request: Request) {
       source: "website_booking",
       realtor_id: realtorId,
       customer_id: customerId,
-      album_id: albumId,
+      album_id: null,
       property_address: payload.property_address,
       listing_title: payload.listing_title,
       service_type: payload.service_type,
       shooting_date: payload.preferred_shooting_date || null,
-      delivery_deadline: payload.preferred_delivery_deadline || null,
-      total_price: payload.estimated_price,
+      delivery_deadline: null,
+      total_price: breakdown.total,
       priority: "normal",
       status: needsReview ? "pending_confirmation" : "new_booking",
       notes: payload.notes,
@@ -111,18 +114,17 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await admin.from("job_timeline_events").insert({
-    job_id: job.id,
-    event_type: "website_booking_submitted",
-    message: needsReview
-      ? "Website booking submitted; no matching realtor found — needs review"
-      : "Website booking submitted and matched to realtor",
-    metadata: { needs_review: needsReview },
-  });
-
-  if (albumId) {
-    await admin.from("albums").update({ job_id: job.id }).eq("id", albumId);
-  }
+  await admin.from("job_timeline_events").insert([
+    { job_id: job.id, event_type: "booking_created", message: "Booking created", metadata: { source: "website_booking" } },
+    {
+      job_id: job.id,
+      event_type: "website_booking_submitted",
+      message: needsReview
+        ? "Website booking submitted; no matching realtor found — needs review"
+        : "Website booking submitted and matched to realtor",
+      metadata: { needs_review: needsReview },
+    },
+  ]);
 
   await admin.from("notifications").insert({
     job_id: job.id,
@@ -130,7 +132,7 @@ export async function POST(request: Request) {
     customer_id: customerId,
     type: needsReview ? "unmatched_booking_needs_review" : "new_website_booking",
     title: needsReview ? "Booking could not be matched to an existing realtor" : "New website booking submitted",
-    message: `Property: ${payload.property_address}. ${needsReview ? "Please match to a realtor or create one." : ""}`,
+    message: `Property: ${payload.property_address}. ${needsReview ? "Confirm shooting to create album." : ""}`,
   });
 
   return NextResponse.json({

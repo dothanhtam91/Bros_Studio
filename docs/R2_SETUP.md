@@ -16,6 +16,18 @@ Set these in `.env.local` (local) or your host’s env (e.g. Vercel, Cloudflare 
 
 Never expose `R2_ACCESS_KEY_ID` or `R2_SECRET_ACCESS_KEY` to the client. `R2_PUBLIC_URL` is not secret (used for building image URLs).
 
+## CORS (required for album image upload)
+
+Album images are uploaded **directly from the browser** to R2 (presigned URLs) to avoid Vercel's 4.5 MB body limit. Configure CORS on your R2 bucket:
+
+1. R2 → your bucket → **Settings** → **CORS policy**.
+2. Add a rule, for example:
+   - **Allowed origins:** `https://yourdomain.com`, `https://www.yourdomain.com`, `https://*.vercel.app` (or `*` for testing).
+   - **Allowed methods:** `PUT`, `GET`, `HEAD`.
+   - **Allowed headers:** `Content-Type`.
+
+Without CORS, the browser will block the direct PUT and you may see a CORS error in the console.
+
 ## Create bucket and public access
 
 1. Cloudflare Dashboard → **R2** → **Create bucket** (e.g. `bros-studio-media`).
@@ -34,7 +46,9 @@ Never expose `R2_ACCESS_KEY_ID` or `R2_SECRET_ACCESS_KEY` to the client. `R2_PUB
 - **`src/lib/r2/client.ts`** — S3 client, `uploadToR2`, `deleteFromR2`, `getR2PublicUrl`. Server-only.
 - **`src/lib/r2/index.ts`** — Re-exports.
 - **Uploads:**  
-  - `POST /api/admin/albums/[id]/images` — uploads to `albums/{albumId}/{uuid}.{ext}`, inserts `album_images` with `image_url` (public URL) and `storage_key`.  
+  - `POST /api/admin/albums/[id]/images/presign` — returns presigned URLs.  
+  - Client uploads files directly to R2 (bypasses Vercel 4.5 MB limit).  
+  - `POST /api/admin/albums/[id]/images/confirm` — inserts `album_images` after upload.  
   - `POST /api/admin/realtors/[id]/headshot` — uploads to `realtors/{realtorId}/headshot.{ext}`, updates `realtors.headshot_url`.
 - **Delete:**  
   - `DELETE /api/admin/albums/[id]/images/[imageId]` — deletes object by `storage_key` (if set), then deletes DB row. Legacy rows without `storage_key` only remove the row.

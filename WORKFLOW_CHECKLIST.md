@@ -40,7 +40,7 @@ Run in order:
 
 ### 1.5 First admin user
 
-1. Open the app → **Client login** → **Create account** (or **Continue with Google**).
+1. Open the app → **Login** → **Create account** (or **Continue with Google**).
 2. Sign up with an email you control.
 3. In Supabase → **SQL Editor**, run (replace with your email):
 
@@ -68,7 +68,7 @@ npm run dev
 ### 2.1 Home
 
 - [ ] Open **http://localhost:3000**
-- [ ] Header: Home, Portfolio, Packages, Book, About, Contact, **Client login**, **Book a shoot**.
+- [ ] Header: Home, Portfolio, Packages, Book, About, Contact, **Login** (or avatar when signed in), **Book a shoot**.
 - [ ] Hero section and content load.
 
 ### 2.2 Portfolio (studio only)

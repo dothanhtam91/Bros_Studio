@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { findOrCreateAlbumForJob } from "@/lib/jobs";
+import { getTravelForAddress } from "@/lib/travel";
+import { computePricingBreakdown } from "@/lib/pricing";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -84,6 +85,10 @@ export async function POST(request: Request) {
     property_address,
     listing_title,
     service_type,
+    sq_ft,
+    package_id,
+    is_airbnb,
+    additional_request_fee,
     shooting_date,
     delivery_deadline,
     total_price,
@@ -97,6 +102,10 @@ export async function POST(request: Request) {
     property_address: string;
     listing_title?: string | null;
     service_type?: string | null;
+    sq_ft?: number | null;
+    package_id?: string | null;
+    is_airbnb?: boolean;
+    additional_request_fee?: number | null;
     shooting_date?: string | null;
     delivery_deadline?: string | null;
     total_price?: number | null;
@@ -113,21 +122,21 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
+  let finalTotal: number | null = total_price != null ? Number(total_price) : null;
+  if (finalTotal == null) {
+    const { travelFee } = await getTravelForAddress(property_address.trim());
+    const additionalNum = Math.max(0, Number(additional_request_fee) || 0);
+    const breakdown = computePricingBreakdown({
+      packageId: package_id || "2",
+      isAirbnb: Boolean(is_airbnb),
+      travelFee,
+      additionalRequestFee: additionalNum,
+    });
+    finalTotal = breakdown.total;
+  }
+
   const { data: realtor } = await admin.from("realtors").select("id").eq("id", realtor_id).single();
   if (!realtor) return NextResponse.json({ error: "Realtor not found" }, { status: 404 });
-
-  let albumId: string;
-  try {
-    const album = await findOrCreateAlbumForJob(
-      admin,
-      realtor_id,
-      property_address,
-      shooting_date || null
-    );
-    albumId = album.id;
-  } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Failed to create album" }, { status: 500 });
-  }
 
   const { data: job, error } = await admin
     .from("jobs")
@@ -135,13 +144,13 @@ export async function POST(request: Request) {
       source: "admin_created",
       realtor_id: realtor_id,
       customer_id: null,
-      album_id: albumId,
+      album_id: null,
       property_address: property_address.trim(),
       listing_title: listing_title?.trim() || null,
       service_type: service_type?.trim() || null,
       shooting_date: shooting_date || null,
       delivery_deadline: delivery_deadline || null,
-      total_price: total_price != null ? Number(total_price) : null,
+      total_price: finalTotal,
       priority: priority?.trim() || "normal",
       status: status?.trim() || "new_booking",
       notes: notes?.trim() || null,
@@ -153,18 +162,13 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await admin.from("job_timeline_events").insert({
-    job_id: job.id,
-    event_type: "job_created",
-    message: "Job created by admin",
-    metadata: {},
-  });
-
-  await admin.from("albums").update({ job_id: job.id }).eq("id", albumId);
+  await admin.from("job_timeline_events").insert([
+    { job_id: job.id, event_type: "booking_created", message: "Job created", metadata: { source: "admin_created" } },
+    { job_id: job.id, event_type: "job_created", message: "Job created by admin", metadata: {} },
+  ]);
 
   return NextResponse.json({
     id: job.id,
-    album_id: job.album_id,
     status: job.status,
     created_at: job.created_at,
   });

@@ -4,4 +4,5 @@ export {
   uploadToR2,
   deleteFromR2,
   getR2PublicUrl,
+  getPresignedUploadUrl,
 } from "./client";

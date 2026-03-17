@@ -41,8 +41,8 @@ export default async function AdminJobPage({
 
   return (
     <main className="min-h-screen pt-24 pb-20">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <Link href="/admin" className="text-sm font-medium text-stone-600 hover:text-amber-800 transition">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <Link href="/admin" className="text-sm font-medium text-stone-600 transition hover:text-amber-800">
           ← Jobs
         </Link>
         <AdminJobDetail

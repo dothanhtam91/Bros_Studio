@@ -3,7 +3,7 @@
 const testimonials = [
   {
     quote: "Amazing photographer! Did aerial pictures on one of my listings and they turned out great! Would recommend to anybody who needs a photographer!",
-    name: "Brooke Houston",
+    name: "Brooke ",
     company: "Texas Real Estate Pro",
     stars: 5,
   },
@@ -33,8 +33,45 @@ function StarRating({ count }: { count: number }) {
 
 export function TestimonialsSection() {
   return (
-    <section className="bg-white py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden py-20 sm:py-28">
+      {/* Base: soft warm white with gradient */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, #ffffff 0%, #fafafa 30%, #f5f5f5 100%)",
+        }}
+        aria-hidden
+      />
+      {/* Radial spotlight behind heading and cards */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 50% at 50% 35%, rgba(255,255,255,0.9) 0%, rgba(250,250,250,0.4) 50%, transparent 70%)",
+        }}
+        aria-hidden
+      />
+      {/* Soft top transition from About */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-24"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, transparent 100%)",
+        }}
+        aria-hidden
+      />
+      {/* Bottom soft fade — leads into Final CTA */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(250,250,250,0.8) 0%, transparent 100%)",
+        }}
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
           What Realtors Say About Us
         </h2>

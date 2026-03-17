@@ -147,11 +147,7 @@ function LoginContent() {
             Back to home
           </Link>
         </p>
-        <p className="mt-6 text-center text-xs text-zinc-400">
-          For Google/Facebook to work, add this in Supabase → Authentication → URL Configuration → Redirect URLs:{" "}
-          <span className="break-all font-mono">{`${appUrl}/auth/callback`}</span>
-          {" "}If you use a different URL (e.g. http://127.0.0.1:3001), add that origin + /auth/callback too. If you’re sent to the homepage after signing in with Google, the callback URL is missing or doesn’t match—add the exact URL you see in the address bar when you click Continue with Google, then add /auth/callback (e.g. http://127.0.0.1:3001/auth/callback).
-        </p>
+        
       </div>
     </main>
   );

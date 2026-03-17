@@ -69,8 +69,291 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
+@keyframes orbit-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.animate-orbit-float {
+  animation: orbit-float 5s ease-in-out infinite;
+}
+
+/* Solar system: slow orbital ring rotation */
+@keyframes orbit-ring-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-orbit-ring-inner {
+  animation: orbit-ring-rotate 42s linear infinite;
+}
+
+.animate-orbit-ring-middle {
+  animation: orbit-ring-rotate 58s linear infinite;
+}
+
+.animate-orbit-ring-outer {
+  animation: orbit-ring-rotate 80s linear infinite;
+}
+
+/* Node gentle drift */
+@keyframes orbit-node-drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-orbit-node-drift {
+  animation: orbit-node-drift 5s ease-in-out infinite;
+}
+
+/* Planet/node reveal on scroll */
+@keyframes orbit-planet-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-orbit-planet-in {
+  animation: orbit-planet-in 0.6s ease-out forwards;
+}
+
+/* Core scale-in */
+@keyframes orbit-core-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-orbit-core-in {
+  animation: orbit-core-in 0.8s ease-out forwards;
+}
+
+@keyframes ken-burns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 20s ease-in-out infinite alternate;
+}
+
+/* Hero: blur-to-sharp reveal */
+@keyframes hero-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-hero-reveal {
+  animation: hero-reveal 0.8s ease-out forwards;
+}
+
+/* Hero badges: gentle float */
+@keyframes hero-badge-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-hero-badge-float {
+  animation: hero-badge-float 4s ease-in-out infinite;
+}
+
 .animate-shimmer {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
+}
+
+/* AI Tools section: scroll reveal */
+@keyframes ai-tool-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* AI Tools: right panel content transition on hover */
+@keyframes ai-preview-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* AI Tools: example work pop-up when feature is selected */
+@keyframes ai-example-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-ai-example-pop {
+  animation: ai-example-pop 0.35s ease-out forwards;
+}
+
+/* Value props: header reveal - subtle fade-up */
+@keyframes value-props-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.value-props-reveal {
+  animation: value-props-reveal 0.6s ease-out forwards;
+}
+
+/* Featured card spotlight reveal */
+@keyframes value-props-featured-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Stacked card cascade (different y offsets) */
+@keyframes value-props-cascade-1 {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes value-props-cascade-2 {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes value-props-cascade-3 {
+  from { opacity: 0; transform: translateY(36px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.value-props-featured-reveal {
+  animation: value-props-featured-reveal 0.7s ease-out forwards;
+}
+.value-props-cascade-1 { animation: value-props-cascade-1 0.5s ease-out 0.15s both; }
+.value-props-cascade-2 { animation: value-props-cascade-2 0.5s ease-out 0.28s both; }
+.value-props-cascade-3 { animation: value-props-cascade-3 0.5s ease-out 0.4s both; }
+
+/* CTA finishing move: fade + upward */
+@keyframes value-props-cta-reveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Arrow draw left to right */
+@keyframes value-props-arrow-draw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Ambient light band - drifts left to right */
+@keyframes value-props-ambient-band {
+  0% { transform: translateX(-100%); opacity: 0.04; }
+  50% { opacity: 0.07; }
+  100% { transform: translateX(200%); opacity: 0.04; }
+}
+
+/* Who I Serve: section reveal */
+@keyframes who-serve-reveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.who-serve-reveal {
+  animation: who-serve-reveal 0.6s ease-out forwards;
+}
+
+/* Workflow showcase */
+@keyframes workflow-connector-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes workflow-step-reveal {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes workflow-ai-glow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.03); }
+}
+
+@keyframes workflow-ai-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.25); }
+  50% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
+}
+
+.workflow-connector-draw {
+  animation: workflow-connector-draw 1s ease-out 0.4s forwards;
+}
+
+/* Final CTA: editorial reveal */
+@keyframes final-cta-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Homepage section backgrounds — premium layered system */
+.section-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.section-grid-subtle {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* Hide scrollbar for horizontal category rail */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
