@@ -9,6 +9,56 @@ function normalizeVideoUrl(raw?: string | null): string | null {
   return `https://${value}`;
 }
 
+function getEmbeddedVideo(url: string):
+  | { kind: "iframe"; src: string }
+  | { kind: "video"; src: string }
+  | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      const id = u.pathname.split("/").filter(Boolean)[0];
+      if (id) {
+        return {
+          kind: "iframe",
+          src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
+        };
+      }
+    }
+
+    if (host.includes("youtube.com")) {
+      const id = u.searchParams.get("v");
+      if (id) {
+        return {
+          kind: "iframe",
+          src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
+        };
+      }
+      const parts = u.pathname.split("/").filter(Boolean);
+      if (parts[0] === "embed" && parts[1]) {
+        return { kind: "iframe", src: url };
+      }
+    }
+
+    if (host.includes("vimeo.com")) {
+      const parts = u.pathname.split("/").filter(Boolean);
+      const id = parts.find((p) => /^\d+$/.test(p));
+      if (id) {
+        return { kind: "iframe", src: `https://player.vimeo.com/video/${id}` };
+      }
+    }
+
+    if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(u.pathname)) {
+      return { kind: "video", src: url };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function DeliveryPage({
   params,
 }: {
@@ -73,6 +123,7 @@ export default async function DeliveryPage({
       : imageList?.[0]?.image_url ?? null;
 
   const normalizedVideoUrl = normalizeVideoUrl(album.video_url);
+  const embeddedVideo = normalizedVideoUrl ? getEmbeddedVideo(normalizedVideoUrl) : null;
 
   const { data: realtor } = await admin
     .from("realtors")
@@ -119,6 +170,30 @@ export default async function DeliveryPage({
             </div>
           )}
 
+          {embeddedVideo && (
+            <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-100">
+              <div className="aspect-video w-full">
+                {embeddedVideo.kind === "iframe" ? (
+                  <iframe
+                    src={embeddedVideo.src}
+                    title="Video walkthrough"
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={embeddedVideo.src}
+                    controls
+                    playsInline
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           <dl className="space-y-4 border-t border-zinc-100 pt-6">
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">Property</dt>
@@ -159,7 +234,7 @@ export default async function DeliveryPage({
               </Link>
             )}
 
-            {normalizedVideoUrl && (
+            {!embeddedVideo && normalizedVideoUrl && (
               <a
                 href={normalizedVideoUrl}
                 target="_blank"
