@@ -18,12 +18,16 @@ export function DeleteAlbumButton({
 }: Props) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useState<"keep" | "delete" | null>(null);
 
-  const handleDelete = async () => {
-    setDeleting(true);
+  const handleDelete = async (jobHandling: "keep" | "delete") => {
+    setDeleting(jobHandling);
     try {
-      const res = await fetch(`/api/admin/albums/${albumId}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/albums/${albumId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobHandling }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         alert((data.error as string) || "Failed to delete album");
@@ -32,7 +36,7 @@ export function DeleteAlbumButton({
       router.push(`/admin/realtors/${realtorId}`);
       router.refresh();
     } finally {
-      setDeleting(false);
+      setDeleting(null);
       setConfirming(false);
     }
   };
@@ -40,20 +44,28 @@ export function DeleteAlbumButton({
   if (confirming) {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-zinc-600">Permanently delete this album and its images?</span>
+        <span className="text-sm text-zinc-600">Delete album and images. What about linked job?</span>
         <button
           type="button"
-          onClick={handleDelete}
-          disabled={deleting}
-          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          onClick={() => handleDelete("keep")}
+          disabled={deleting !== null}
+          className="rounded-xl border border-amber-200/90 bg-amber-50 px-4 py-2 text-sm font-medium text-stone-800 transition hover:bg-amber-100/90 disabled:opacity-50"
         >
-          {deleting ? "Deleting…" : "Yes, delete"}
+          {deleting === "keep" ? "Deleting…" : "Keep job"}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDelete("delete")}
+          disabled={deleting !== null}
+          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+        >
+          {deleting === "delete" ? "Deleting…" : "Delete job too"}
         </button>
         <button
           type="button"
           onClick={() => setConfirming(false)}
-          disabled={deleting}
-          className="rounded-xl border border-amber-200/80 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-amber-50/80 disabled:opacity-50"
+          disabled={deleting !== null}
+          className="rounded-xl border border-amber-200/80 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-amber-50/80 disabled:opacity-50"
         >
           Cancel
         </button>

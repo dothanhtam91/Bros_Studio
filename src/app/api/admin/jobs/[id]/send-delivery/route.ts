@@ -45,11 +45,25 @@ export async function POST(
 
   const { data: album } = await admin
     .from("albums")
-    .select("id, slug, realtor_id")
+    .select("id, slug, realtor_id, cover_image_id")
     .eq("id", job.album_id)
     .single();
   if (!album)
     return NextResponse.json({ error: "Album not found" }, { status: 404 });
+
+  const { data: albumImages } = await admin
+    .from("album_images")
+    .select("id, image_url, sort_order")
+    .eq("album_id", album.id)
+    .order("sort_order", { ascending: true });
+
+  let coverImageUrl: string | null = null;
+  if (albumImages?.length) {
+    const coverRow = album.cover_image_id
+      ? albumImages.find((img) => img.id === album.cover_image_id) ?? albumImages[0]
+      : albumImages[0];
+    coverImageUrl = coverRow?.image_url ?? null;
+  }
 
   const { data: realtor } = await admin
     .from("realtors")
@@ -89,6 +103,7 @@ export async function POST(
     recipientName: realtor.name,
     deliveryPageUrl,
     propertyAddress: job.property_address ?? "your property",
+    coverImageUrl,
     subject: `Your photos are ready – ${job.property_address}`,
   });
 

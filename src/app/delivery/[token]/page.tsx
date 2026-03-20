@@ -2,6 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+function normalizeVideoUrl(raw?: string | null): string | null {
+  const value = (raw ?? "").trim();
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
+
 export default async function DeliveryPage({
   params,
 }: {
@@ -36,7 +43,7 @@ export default async function DeliveryPage({
             </div>
             <h1 className="text-xl font-semibold text-stone-900">Delivery not ready yet</h1>
             <p className="mt-2 text-sm text-zinc-600">
-              Your photos are still being prepared. We’ll notify you as soon as your delivery is ready.
+              Your photos are still being prepared. We\'ll notify you as soon as your delivery is ready.
             </p>
             <p className="mt-6 text-xs text-zinc-500">
               If you believe this is an error, please contact your photographer.
@@ -49,10 +56,23 @@ export default async function DeliveryPage({
 
   const { data: album } = await admin
     .from("albums")
-    .select("id, slug, realtor_id")
+    .select("id, slug, realtor_id, cover_image_id, video_url")
     .eq("id", job.album_id!)
     .single();
   if (!album) notFound();
+
+  const { data: imageList } = await admin
+    .from("album_images")
+    .select("id, image_url, sort_order")
+    .eq("album_id", album.id)
+    .order("sort_order", { ascending: true });
+
+  const coverImageUrl =
+    album.cover_image_id && (imageList?.length ?? 0) > 0
+      ? imageList?.find((img) => img.id === album.cover_image_id)?.image_url ?? imageList?.[0]?.image_url ?? null
+      : imageList?.[0]?.image_url ?? null;
+
+  const normalizedVideoUrl = normalizeVideoUrl(album.video_url);
 
   const { data: realtor } = await admin
     .from("realtors")
@@ -89,6 +109,16 @@ export default async function DeliveryPage({
             </div>
           </div>
 
+          {coverImageUrl && (
+            <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-100">
+              <img
+                src={coverImageUrl}
+                alt="Property cover"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+
           <dl className="space-y-4 border-t border-zinc-100 pt-6">
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">Property</dt>
@@ -112,12 +142,12 @@ export default async function DeliveryPage({
           {job.notes && (
             <div className="mt-6 rounded-2xl bg-zinc-50/80 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">Notes</p>
-              <p className="mt-1 text-sm text-zinc-700 whitespace-pre-wrap">{job.notes}</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-700">{job.notes}</p>
             </div>
           )}
 
-          {albumUrl && (
-            <div className="mt-8">
+          <div className="mt-8 space-y-3">
+            {albumUrl && (
               <Link
                 href={albumUrl}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-accent)] px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-[var(--brand-accent-hover)] active:scale-[0.98]"
@@ -127,11 +157,26 @@ export default async function DeliveryPage({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
-              <p className="mt-3 text-center text-xs text-zinc-500">
-                Opens your album in a new page. You can download or share from there.
-              </p>
-            </div>
-          )}
+            )}
+
+            {normalizedVideoUrl && (
+              <a
+                href={normalizedVideoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-6 py-3 text-sm font-semibold text-stone-800 shadow-sm transition hover:bg-zinc-50"
+              >
+                Watch video walkthrough
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-4.586-2.65A1 1 0 009 9.384v5.232a1 1 0 001.166.866l4.586-2.65a1 1 0 000-1.732z" />
+                </svg>
+              </a>
+            )}
+
+            <p className="mt-3 text-center text-xs text-zinc-500">
+              Opens your album in a new page. You can download or share from there.
+            </p>
+          </div>
         </div>
 
         <p className="mt-8 text-center text-xs text-zinc-500">

@@ -8,7 +8,7 @@ function escapeHtml(s: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
@@ -17,6 +17,7 @@ export type SendDeliveryEmailParams = {
   recipientName?: string | null;
   deliveryPageUrl: string;
   propertyAddress: string;
+  coverImageUrl?: string | null;
   subject?: string;
 };
 
@@ -32,6 +33,7 @@ export async function sendDeliveryEmail(
     recipientName,
     deliveryPageUrl,
     propertyAddress,
+    coverImageUrl,
     subject = `Your photos are ready – ${params.propertyAddress}`,
   } = params;
 
@@ -58,6 +60,7 @@ export async function sendDeliveryEmail(
       <span style="font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: #292524;">BrosStudio</span>
     </div>
     <div style="background: #ffffff; border-radius: 20px; border: 1px solid rgba(251, 191, 36, 0.35); padding: 32px 28px; box-shadow: 0 1px 3px rgba(120, 53, 15, 0.06);">
+      ${coverImageUrl ? `<div style="text-align: center; margin-bottom: 20px;"><img src="${escapeHtml(coverImageUrl)}" alt="Property cover image" style="max-width: 100%; width: 320px; height: 200px; object-fit: cover; border-radius: 12px;" /></div>` : ""}
       <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.5; color: #3f3f46;">${greeting}</p>
       <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: #52525b;">Your photos for <strong style="color: #292524;">${escapeHtml(propertyAddress)}</strong> are ready.</p>
       <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.5; color: #71717a;">Open your delivery page to view and download your album.</p>
