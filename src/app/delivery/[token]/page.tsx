@@ -234,20 +234,6 @@ export default async function DeliveryPage({
               </Link>
             )}
 
-            {!embeddedVideo && normalizedVideoUrl && (
-              <a
-                href={normalizedVideoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-6 py-3 text-sm font-semibold text-stone-800 shadow-sm transition hover:bg-zinc-50"
-              >
-                Watch video walkthrough
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-4.586-2.65A1 1 0 009 9.384v5.232a1 1 0 001.166.866l4.586-2.65a1 1 0 000-1.732z" />
-                </svg>
-              </a>
-            )}
-
             <p className="mt-3 text-center text-xs text-zinc-500">
               Opens your album in a new page. You can download or share from there.
             </p>
