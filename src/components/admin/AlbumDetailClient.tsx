@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 
 type ImageRow = { id: string; image_url: string; sort_order: number };
 
@@ -58,14 +57,29 @@ export function AlbumDetailClient({
         setUploadError("No valid images. Use .jpg, .png, .webp, or .gif.");
         return;
       }
-      // 2) Upload each file directly to R2
+      // 2) Upload each file directly to R2 (browser → R2; requires R2 bucket CORS)
       for (let i = 0; i < uploads.length; i++) {
         const u = uploads[i];
         const file = fileList[i];
         if (!file) continue;
-        const putRes = await fetch(u.url, { method: "PUT", body: file, headers: { "Content-Type": u.contentType } });
+        let putRes: Response;
+        try {
+          putRes = await fetch(u.url, { method: "PUT", body: file, headers: { "Content-Type": u.contentType } });
+        } catch (putErr) {
+          const msg = putErr instanceof Error ? putErr.message : "Upload failed";
+          setUploadError(
+            msg.toLowerCase().includes("fetch")
+              ? "Upload to storage failed. Check R2 bucket CORS allows your site origin and PUT (see docs/R2_SETUP.md)."
+              : `Upload failed: ${msg}`
+          );
+          return;
+        }
         if (!putRes.ok) {
-          setUploadError(`Upload failed for ${file.name}`);
+          setUploadError(
+            putRes.status === 403
+              ? "Storage rejected upload (403). Check R2 bucket CORS allows your site and PUT."
+              : `Upload failed for ${file.name} (${putRes.status})`
+          );
           return;
         }
       }
@@ -83,7 +97,12 @@ export function AlbumDetailClient({
       if (inputRef.current) inputRef.current.value = "";
       window.location.reload();
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setUploadError(
+        msg.toLowerCase().includes("failed to fetch")
+          ? "Upload to storage failed. Check R2 bucket CORS allows your site origin and PUT (see docs/R2_SETUP.md)."
+          : msg
+      );
     } finally {
       setUploading(false);
     }
@@ -143,13 +162,12 @@ export function AlbumDetailClient({
               }`}
             >
               <div className="aspect-[4/3] bg-zinc-200">
-                <Image
+                {/* Native img so R2 URLs load without Next.js remotePatterns (R2_PUBLIC_URL must be set; bucket must be public) */}
+                <img
                   src={img.image_url}
                   alt=""
-                  width={400}
-                  height={300}
                   className="h-full w-full object-cover"
-                  unoptimized
+                  referrerPolicy="no-referrer"
                 />
               </div>
               <div className="p-2">

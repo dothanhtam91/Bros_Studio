@@ -28,13 +28,13 @@ function LoginContent() {
     setLoading(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
     if (err) {
+      setLoading(false);
       setError(err.message);
       return;
     }
-    router.push("/dashboard");
-    router.refresh();
+    // Full page redirect so the next request includes the session cookie (avoids delay where new tab is logged in but current tab seems stuck)
+    window.location.href = "/dashboard";
   };
 
   const handleOAuth = async (provider: "google" | "facebook") => {

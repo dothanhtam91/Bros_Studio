@@ -48,30 +48,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (user.email) await ensureAdminForEmail(user.id, user.email);
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  // Run profile fetch, admin claim, and realtor lookup in parallel to reduce delay before redirect
+  const email = user.email ?? "";
+  const [profileResult, , realtor] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    email ? ensureAdminForEmail(user.id, email) : Promise.resolve(),
+    email ? findRealtorByUserOrEmail(user.id, email) : Promise.resolve(null),
+  ]);
+  const profile = profileResult.data;
 
   let finalUrl: string;
 
   try {
     if (profile?.role === "admin") {
       finalUrl = `${origin}/admin`;
+    } else if (realtor) {
+      finalUrl = `${origin}/r/${realtor.slug}`;
+    } else if (nextParam === "realtor") {
+      finalUrl = `${origin}/onboarding/realtor`;
     } else {
-      const realtor = user.email
-        ? await findRealtorByUserOrEmail(user.id, user.email)
-        : null;
-      if (realtor) {
-        finalUrl = `${origin}/r/${realtor.slug}`;
-      } else if (nextParam === "realtor") {
-        finalUrl = `${origin}/onboarding/realtor`;
-      } else {
-        finalUrl = nextParam.startsWith("/") ? `${origin}${nextParam}` : nextParam;
-      }
+      finalUrl = nextParam.startsWith("/") ? `${origin}${nextParam}` : nextParam;
     }
   } catch {
     finalUrl = nextParam.startsWith("/") ? `${origin}${nextParam}` : nextParam;
