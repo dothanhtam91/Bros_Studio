@@ -35,9 +35,17 @@ function getEmbeddedVideo(url: string):
           src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
         };
       }
+
       const parts = u.pathname.split("/").filter(Boolean);
       if (parts[0] === "embed" && parts[1]) {
         return { kind: "iframe", src: url };
+      }
+      // Support youtube.com/shorts/{id}
+      if (parts[0] === "shorts" && parts[1]) {
+        return {
+          kind: "iframe",
+          src: `https://www.youtube.com/embed/${parts[1]}?rel=0&modestbranding=1`,
+        };
       }
     }
 
@@ -46,6 +54,20 @@ function getEmbeddedVideo(url: string):
       const id = parts.find((p) => /^\d+$/.test(p));
       if (id) {
         return { kind: "iframe", src: `https://player.vimeo.com/video/${id}` };
+      }
+    }
+
+    // Support Google Drive share links
+    if (host === "drive.google.com") {
+      const parts = u.pathname.split("/").filter(Boolean);
+      const fileIdx = parts.indexOf("file");
+      if (fileIdx >= 0 && parts[fileIdx + 2]) {
+        const id = parts[fileIdx + 2];
+        return { kind: "iframe", src: `https://drive.google.com/file/d/${id}/preview` };
+      }
+      const openId = u.searchParams.get("id");
+      if (openId) {
+        return { kind: "iframe", src: `https://drive.google.com/file/d/${openId}/preview` };
       }
     }
 
@@ -232,6 +254,12 @@ export default async function DeliveryPage({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
+            )}
+
+            {!embeddedVideo && normalizedVideoUrl && (
+              <p className="rounded-xl border border-amber-200/70 bg-amber-50/40 px-3 py-2 text-center text-xs text-amber-800">
+                Video link is saved but not embeddable in-page. Use a YouTube, Vimeo, Google Drive, or direct video file URL.
+              </p>
             )}
 
             <p className="mt-3 text-center text-xs text-zinc-500">
