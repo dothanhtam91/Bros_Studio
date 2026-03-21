@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "BrosStudio | Luxury Real Estate Photography",
   description:
     "MLS-ready photos. Luxury delivery. 24–48h turnaround. Trusted by Houston agents.",
+  icons: {
+    icon: [{ url: "/logo.png", type: "image/png" }],
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

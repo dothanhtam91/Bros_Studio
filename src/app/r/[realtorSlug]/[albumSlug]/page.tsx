@@ -100,14 +100,7 @@ export default async function AlbumDeliveryPage({
         </div>
       </section>
 
-      {/* Walkthrough video */}
-      {album.video_url && (
-        <section className="pt-12 sm:pt-16 lg:pt-20">
-          <WalkthroughVideo videoUrl={album.video_url} />
-        </section>
-      )}
-
-      {/* Photo gallery — heart of the page */}
+      {/* Photo gallery + walkthrough video together */}
       <section className="py-16 sm:py-20 lg:py-24" aria-label="Photo gallery">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <header className="mb-10 sm:mb-12">
@@ -118,6 +111,16 @@ export default async function AlbumDeliveryPage({
               {imageList.length} {imageList.length === 1 ? "photo" : "photos"}
             </p>
           </header>
+
+          {album.video_url && (
+            <div className="mb-10 sm:mb-12">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-500">
+                Walkthrough video
+              </h3>
+              <WalkthroughVideo videoUrl={album.video_url} />
+            </div>
+          )}
+
           {imageList.length > 0 ? (
             <AlbumGalleryClient
               albumId={album.id}

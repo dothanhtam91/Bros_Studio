@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeleteJobFromListButton } from "@/components/admin/DeleteJobFromListButton";
 
 export type JobRow = {
   id: string;
@@ -22,10 +23,13 @@ export function AdminJobsList({ jobs }: { jobs: JobRow[] }) {
       ) : (
         <ul className="space-y-2">
           {jobs.map((j) => (
-            <li key={j.id}>
+            <li
+              key={j.id}
+              className="flex gap-0 overflow-hidden rounded-2xl border border-amber-200/50 bg-white shadow-sm shadow-amber-900/5 transition hover:border-amber-200 hover:shadow-md hover:shadow-amber-900/10"
+            >
               <Link
                 href={`/admin/jobs/${j.id}`}
-                className="block rounded-2xl border border-amber-200/50 bg-white p-4 shadow-sm shadow-amber-900/5 transition hover:border-amber-200 hover:shadow-md hover:shadow-amber-900/10"
+                className="min-w-0 flex-1 p-4 transition hover:bg-amber-50/30"
               >
                 <p className="font-medium text-stone-900">{j.property_address}</p>
                 <p className="text-sm text-stone-500">
@@ -37,6 +41,9 @@ export function AdminJobsList({ jobs }: { jobs: JobRow[] }) {
                   {j.delivery_deadline && ` · Due ${new Date(j.delivery_deadline).toLocaleDateString()}`}
                 </p>
               </Link>
+              <div className="flex shrink-0 items-center border-l border-amber-200/40 bg-white px-3 sm:px-4">
+                <DeleteJobFromListButton jobId={j.id} propertyAddress={j.property_address} />
+              </div>
             </li>
           ))}
         </ul>

@@ -2,85 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-function normalizeVideoUrl(raw?: string | null): string | null {
-  const value = (raw ?? "").trim();
-  if (!value) return null;
-  if (/^https?:\/\//i.test(value)) return value;
-  return `https://${value}`;
-}
-
-function getEmbeddedVideo(url: string):
-  | { kind: "iframe"; src: string }
-  | { kind: "video"; src: string }
-  | null {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, "").toLowerCase();
-
-    if (host === "youtu.be") {
-      const id = u.pathname.split("/").filter(Boolean)[0];
-      if (id) {
-        return {
-          kind: "iframe",
-          src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
-        };
-      }
-    }
-
-    if (host.includes("youtube.com")) {
-      const id = u.searchParams.get("v");
-      if (id) {
-        return {
-          kind: "iframe",
-          src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
-        };
-      }
-
-      const parts = u.pathname.split("/").filter(Boolean);
-      if (parts[0] === "embed" && parts[1]) {
-        return { kind: "iframe", src: url };
-      }
-      // Support youtube.com/shorts/{id}
-      if (parts[0] === "shorts" && parts[1]) {
-        return {
-          kind: "iframe",
-          src: `https://www.youtube.com/embed/${parts[1]}?rel=0&modestbranding=1`,
-        };
-      }
-    }
-
-    if (host.includes("vimeo.com")) {
-      const parts = u.pathname.split("/").filter(Boolean);
-      const id = parts.find((p) => /^\d+$/.test(p));
-      if (id) {
-        return { kind: "iframe", src: `https://player.vimeo.com/video/${id}` };
-      }
-    }
-
-    // Support Google Drive share links
-    if (host === "drive.google.com") {
-      const parts = u.pathname.split("/").filter(Boolean);
-      const fileIdx = parts.indexOf("file");
-      if (fileIdx >= 0 && parts[fileIdx + 2]) {
-        const id = parts[fileIdx + 2];
-        return { kind: "iframe", src: `https://drive.google.com/file/d/${id}/preview` };
-      }
-      const openId = u.searchParams.get("id");
-      if (openId) {
-        return { kind: "iframe", src: `https://drive.google.com/file/d/${openId}/preview` };
-      }
-    }
-
-    if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(u.pathname)) {
-      return { kind: "video", src: url };
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function DeliveryPage({
   params,
 }: {
@@ -115,7 +36,7 @@ export default async function DeliveryPage({
             </div>
             <h1 className="text-xl font-semibold text-stone-900">Delivery not ready yet</h1>
             <p className="mt-2 text-sm text-zinc-600">
-              Your photos are still being prepared. We\'ll notify you as soon as your delivery is ready.
+              Your photos are still being prepared. We&apos;ll notify you as soon as your delivery is ready.
             </p>
             <p className="mt-6 text-xs text-zinc-500">
               If you believe this is an error, please contact your photographer.
@@ -128,7 +49,7 @@ export default async function DeliveryPage({
 
   const { data: album } = await admin
     .from("albums")
-    .select("id, slug, realtor_id, cover_image_id, video_url")
+    .select("id, slug, realtor_id, cover_image_id")
     .eq("id", job.album_id!)
     .single();
   if (!album) notFound();
@@ -141,20 +62,17 @@ export default async function DeliveryPage({
 
   const coverImageUrl =
     album.cover_image_id && (imageList?.length ?? 0) > 0
-      ? imageList?.find((img) => img.id === album.cover_image_id)?.image_url ?? imageList?.[0]?.image_url ?? null
+      ? imageList?.find((img) => img.id === album.cover_image_id)?.image_url ??
+        imageList?.[0]?.image_url ??
+        null
       : imageList?.[0]?.image_url ?? null;
-
-  const normalizedVideoUrl = normalizeVideoUrl(album.video_url);
-  const embeddedVideo = normalizedVideoUrl ? getEmbeddedVideo(normalizedVideoUrl) : null;
 
   const { data: realtor } = await admin
     .from("realtors")
     .select("slug")
     .eq("id", album.realtor_id)
     .single();
-  const albumUrl = realtor?.slug
-    ? `/r/${realtor.slug}/${album.slug}`
-    : null;
+  const albumUrl = realtor?.slug ? `/r/${realtor.slug}/${album.slug}` : null;
 
   const deliveredDate = job.delivered_at
     ? new Date(job.delivered_at).toLocaleDateString("en-US", { dateStyle: "long" })
@@ -184,35 +102,7 @@ export default async function DeliveryPage({
 
           {coverImageUrl && (
             <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-100">
-              <img
-                src={coverImageUrl}
-                alt="Property cover"
-                className="h-full w-full object-cover"
-              />
-            </div>
-          )}
-
-          {embeddedVideo && (
-            <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-100">
-              <div className="aspect-video w-full">
-                {embeddedVideo.kind === "iframe" ? (
-                  <iframe
-                    src={embeddedVideo.src}
-                    title="Video walkthrough"
-                    className="h-full w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video
-                    src={embeddedVideo.src}
-                    controls
-                    playsInline
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
+              <img src={coverImageUrl} alt="Property cover" className="h-full w-full object-cover" />
             </div>
           )}
 
@@ -256,14 +146,8 @@ export default async function DeliveryPage({
               </Link>
             )}
 
-            {!embeddedVideo && normalizedVideoUrl && (
-              <p className="rounded-xl border border-amber-200/70 bg-amber-50/40 px-3 py-2 text-center text-xs text-amber-800">
-                Video link is saved but not embeddable in-page. Use a YouTube, Vimeo, Google Drive, or direct video file URL.
-              </p>
-            )}
-
             <p className="mt-3 text-center text-xs text-zinc-500">
-              Opens your album in a new page. You can download or share from there.
+              Opens your album with the full gallery and walkthrough video (if available).
             </p>
           </div>
         </div>
