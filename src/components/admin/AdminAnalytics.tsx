@@ -22,28 +22,13 @@ import {
   formatCurrencyInt,
 } from "./analyticsChartConfig";
 import { AnalyticsJobsTable, type AnalyticsJobsTableFilters } from "./AnalyticsJobsTable";
+import type { AnalyticsSummaryPayload } from "@/lib/admin/analyticsSummary";
 
-type Summary = {
-  total_active_jobs: number;
-  total_delivered_jobs: number;
-  delivered_this_week: number;
-  total_overdue_jobs: number;
-  total_revision_requests: number;
-  average_turnaround_days: number | null;
-  total_revenue: number;
-  revenue_by_source: Record<string, number>;
-  website_bookings_this_week: number;
-  admin_created_jobs_this_week: number;
-  jobs_by_status?: Record<string, number>;
-  bookings_by_week?: { week: string; website: number; admin: number; total?: number }[];
-  revenue_by_week?: { week: string; revenue: number }[];
-  turnaround_by_week?: { week: string; avgDays: number }[];
-  top_realtors_by_volume?: { realtor_id: string; name: string; count: number }[];
-} | null;
+type Summary = AnalyticsSummaryPayload | null;
 
 interface AdminAnalyticsProps {
   summary: Summary;
-  reportingPeriodLabel?: string;
+  range: { startISO: string; endISO: string; label: string };
 }
 
 function formatStatus(s: string) {
@@ -63,7 +48,7 @@ const statusOrder = [
   "cancelled",
 ];
 
-export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }: AdminAnalyticsProps) {
+export function AdminAnalytics({ summary, range }: AdminAnalyticsProps) {
   const [tableFilters, setTableFilters] = useState<AnalyticsJobsTableFilters>({
     status: "",
     source: "",
@@ -99,10 +84,10 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
 
   return (
     <div className="mt-10 space-y-10">
-      {/* Top bar: period + actions */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-stone-500">
-          <span className="font-medium text-stone-700">{reportingPeriodLabel}</span>
+          Metrics below use <span className="font-medium text-stone-700">{range.label}</span>. Job table is
+          filtered by job creation date in the same window.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <Link
@@ -120,24 +105,38 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
         </div>
       </div>
 
-      {/* 1. KPI cards – single-number metrics only */}
       <section>
         <h2 className="text-xs font-semibold uppercase tracking-widest text-stone-400">Key metrics</h2>
+        <p className="mt-1 text-xs text-stone-500">
+          Created / pipeline counts use jobs created in the period. Revenue &amp; turnaround use deliveries in
+          the period. Overdue uses deadlines before the end of the period.
+        </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Active jobs", value: formatInt(summary.total_active_jobs) },
-            { label: "Overdue", value: formatInt(summary.total_overdue_jobs), alert: summary.total_overdue_jobs > 0 },
-            { label: "Delivered (total)", value: formatInt(summary.total_delivered_jobs) },
-            { label: "Delivered this week", value: formatInt(summary.delivered_this_week) },
+            { label: "Jobs created", value: formatInt(summary.jobs_created_in_period) },
+            {
+              label: "In progress",
+              value: formatInt(summary.in_progress_in_period),
+              hint: "Active statuses, created in period",
+            },
+            { label: "Delivered", value: formatInt(summary.delivered_in_period) },
+            {
+              label: "Overdue",
+              value: formatInt(summary.overdue_as_of_period_end),
+              alert: summary.overdue_as_of_period_end > 0,
+            },
           ].map((m) => (
             <div
               key={m.label}
               className={`rounded-2xl border bg-white p-5 shadow-sm ${m.alert ? "border-red-200/80 bg-red-50/30" : "border-stone-200"}`}
             >
               <p className="text-xs font-medium uppercase tracking-wider text-stone-400">{m.label}</p>
-              <p className={`mt-2 text-2xl font-semibold tabular-nums tracking-tight ${m.alert ? "text-red-800" : "text-stone-900"}`}>
+              <p
+                className={`mt-2 text-2xl font-semibold tabular-nums tracking-tight ${m.alert ? "text-red-800" : "text-stone-900"}`}
+              >
                 {m.value}
               </p>
+              {"hint" in m && m.hint ? <p className="mt-1 text-[11px] text-stone-400">{m.hint}</p> : null}
             </div>
           ))}
         </div>
@@ -146,29 +145,40 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
             {
               label: "Avg. turnaround",
               value: summary.average_turnaround_days != null ? `${formatInt(summary.average_turnaround_days)} days` : "—",
+              hint: "Delivered in period",
             },
-            { label: "Total revenue", value: formatCurrencyInt(summary.total_revenue) },
-            { label: "Open revisions", value: formatInt(summary.total_revision_requests) },
-            { label: "Website bookings (7d)", value: formatInt(summary.website_bookings_this_week) },
+            { label: "Revenue (delivered)", value: formatCurrencyInt(summary.total_revenue) },
+            {
+              label: "Revision requests",
+              value: formatInt(summary.total_revision_requests_in_period),
+              hint: "Logged in period",
+            },
+            {
+              label: "New by source",
+              value: `${formatInt(summary.website_bookings_in_period)} web`,
+              sub: `${formatInt(summary.admin_created_jobs_in_period)} admin`,
+            },
           ].map((m) => (
             <div key={m.label} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
               <p className="text-xs font-medium uppercase tracking-wider text-stone-400">{m.label}</p>
               <p className="mt-2 text-xl font-semibold tabular-nums text-stone-900">{m.value}</p>
+              {"sub" in m && m.sub ? <p className="mt-0.5 text-sm text-stone-600">{m.sub}</p> : null}
+              {"hint" in m && m.hint ? <p className="mt-1 text-[11px] text-stone-400">{m.hint}</p> : null}
             </div>
           ))}
         </div>
       </section>
 
-      {/* 2. Four high-value charts only */}
       <section>
         <h2 className="text-xs font-semibold uppercase tracking-widest text-stone-400">Trends</h2>
-        <p className="mt-1 text-xs text-stone-500">Bookings trend, revenue trend, workflow distribution, and delivery performance.</p>
+        <p className="mt-1 text-xs text-stone-500">
+          Weekly buckets within <span className="font-medium text-stone-600">{range.label}</span>.
+        </p>
         <div className="mt-4 grid gap-6 lg:grid-cols-2">
-          {/* Jobs over time */}
           {jobsOverTimeData.length > 0 && (
             <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
               <h3 className="text-sm font-semibold text-stone-900">Jobs over time</h3>
-              <p className="mt-0.5 text-xs text-stone-500">New jobs per week</p>
+              <p className="mt-0.5 text-xs text-stone-500">New jobs per week (created in period)</p>
               <div className="mt-4 h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={jobsOverTimeData} margin={CHART_MARGIN}>
@@ -186,7 +196,6 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
             </div>
           )}
 
-          {/* Revenue over time */}
           {revenueByWeek.length > 0 && (
             <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
               <h3 className="text-sm font-semibold text-stone-900">Revenue over time</h3>
@@ -208,11 +217,10 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
             </div>
           )}
 
-          {/* Jobs by status – click to filter table */}
           {jobsByStatusData.length > 0 && (
             <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
               <h3 className="text-sm font-semibold text-stone-900">Jobs by status</h3>
-              <p className="mt-0.5 text-xs text-stone-500">Where jobs are in the workflow · click a bar to filter table</p>
+              <p className="mt-0.5 text-xs text-stone-500">Jobs created in period · click a bar to filter table</p>
               <div className="mt-4 h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={jobsByStatusData} layout="vertical" margin={BAR_CHART_LAYOUT_MARGIN}>
@@ -240,11 +248,10 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
             </div>
           )}
 
-          {/* Turnaround trend */}
           {turnaroundByWeek.length > 0 && (
             <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
               <h3 className="text-sm font-semibold text-stone-900">Turnaround trend</h3>
-              <p className="mt-0.5 text-xs text-stone-500">Avg days to deliver by week</p>
+              <p className="mt-0.5 text-xs text-stone-500">Avg days to deliver by week of delivery</p>
               <div className="mt-4 h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={turnaroundByWeek} margin={CHART_MARGIN}>
@@ -264,12 +271,11 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
         </div>
       </section>
 
-      {/* 3. Summary blocks (no charts): revenue by source + top realtors */}
       <section className="grid gap-6 lg:grid-cols-2">
         {revenueBySourceList.length > 0 && (
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             <h3 className="text-sm font-semibold text-stone-900">Revenue by source</h3>
-            <p className="mt-0.5 text-xs text-stone-500">Click a row to filter the jobs table</p>
+            <p className="mt-0.5 text-xs text-stone-500">Delivered in period · click a row to filter the jobs table</p>
             <ul className="mt-4 space-y-2">
               {revenueBySourceList.map((r) => (
                 <li key={r.sourceKey}>
@@ -290,7 +296,7 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
         {summary.top_realtors_by_volume && summary.top_realtors_by_volume.length > 0 && (
           <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             <h3 className="text-sm font-semibold text-stone-900">Top realtors by volume</h3>
-            <p className="mt-0.5 text-xs text-stone-500">Click a row to filter the jobs table</p>
+            <p className="mt-0.5 text-xs text-stone-500">Jobs created in period · click a row to filter</p>
             <ul className="mt-4 space-y-1">
               {summary.top_realtors_by_volume.map((r) => (
                 <li key={r.realtor_id}>
@@ -309,12 +315,18 @@ export function AdminAnalytics({ summary, reportingPeriodLabel = "Last 7 days" }
         )}
       </section>
 
-      {/* 4. Jobs table */}
       <section>
         <h2 className="text-xs font-semibold uppercase tracking-widest text-stone-400">Jobs</h2>
-        <p className="mt-1 text-xs text-stone-500">Drill down by status, source, or realtor. Filters apply when you click chart bars or summary rows above.</p>
+        <p className="mt-1 text-xs text-stone-500">
+          Jobs created between period start and end. Filters from charts apply on top of the date window.
+        </p>
         <div className="mt-4">
-          <AnalyticsJobsTable filters={tableFilters} onFiltersChange={setTableFilters} />
+          <AnalyticsJobsTable
+            filters={tableFilters}
+            onFiltersChange={setTableFilters}
+            createdFrom={range.startISO}
+            createdTo={range.endISO}
+          />
         </div>
       </section>
     </div>

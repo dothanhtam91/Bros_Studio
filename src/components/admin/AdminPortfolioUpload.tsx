@@ -23,10 +23,18 @@ export function AdminPortfolioUpload() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage({ type: "err", text: data.error || "Upload failed." });
+        const detail =
+          data.error ||
+          (Array.isArray(data.errors) ? data.errors.join(" ") : null) ||
+          "Upload failed.";
+        setMessage({ type: "err", text: detail });
         return;
       }
-      setMessage({ type: "ok", text: `Uploaded ${data.uploaded} image(s).` });
+      let ok = `Uploaded ${data.uploaded} image(s).`;
+      if (Array.isArray(data.errors) && data.errors.length) {
+        ok += ` Some files failed: ${data.errors.join("; ")}`;
+      }
+      setMessage({ type: "ok", text: ok });
       if (inputRef.current) inputRef.current.value = "";
       window.location.reload();
     } catch {
@@ -39,13 +47,13 @@ export function AdminPortfolioUpload() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-zinc-600">
-        Upload images from your computer. They will appear on the public Portfolio page. Use JPG, PNG, WebP, or GIF.
+        Upload images from your computer (stored in Cloudflare R2). They appear on the public Portfolio page. Use JPG, PNG, WebP, GIF, or HEIC.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
           multiple
           onChange={handleUpload}
           disabled={uploading}

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PACKAGE_TIERS, type PackageTier } from "@/lib/pricing";
+import { VideographySection } from "@/components/packages/VideographySection";
 
 export const metadata: Metadata = {
   title: "Packages & Pricing | BrosStudio",
-  description: "Real estate photography packages by square footage. From under 1,000 sqft to 3,000+ sqft.",
+  description:
+    "Real estate photography packages by square footage and custom videography quotes — YouTube walkthroughs, reels, and more.",
 };
 
 const FAQ = [
@@ -23,6 +25,10 @@ const FAQ = [
   {
     q: "Travel fees?",
     a: "Properties within 20 miles of Katy, TX 77449 have no travel fee. Beyond 20 miles, $1.80 per mile applies.",
+  },
+  {
+    q: "How does videography pricing work?",
+    a: "Video is quoted per project (runtime, platforms, and deliverables). Use the videography inquiry form on this page or contact us — we’ll send a custom quote; there are no fixed video prices listed online.",
   },
 ];
 
@@ -105,14 +111,22 @@ export default function PackagesPage() {
           Packages & pricing
         </h1>
         <p className="mt-2 text-zinc-600">
-          Simple tiers by square footage. More space, more photos, transparent pricing.
+          Simple tiers by square footage for stills, plus videography quoted to your shoot and deliverables.
         </p>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-5">
-          {PACKAGE_TIERS.map((tier) => (
-            <PriceCard key={tier.id} tier={tier} />
-          ))}
-        </div>
+        <section className="mt-12" aria-labelledby="photo-packages-heading">
+          <h2 id="photo-packages-heading" className="text-lg font-semibold text-zinc-900">
+            Real estate photography
+          </h2>
+          <p className="mt-1 text-sm text-zinc-600">Fixed packages by sqft — select a tier and book online.</p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-5">
+            {PACKAGE_TIERS.map((tier) => (
+              <PriceCard key={tier.id} tier={tier} />
+            ))}
+          </div>
+        </section>
+
+        <VideographySection />
 
         <section className="mt-14">
           <h2 className="text-xl font-semibold text-zinc-900">FAQ</h2>

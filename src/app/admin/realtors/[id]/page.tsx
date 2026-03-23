@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { RealtorEditForm } from "@/components/admin/RealtorEditForm";
 import { DeleteAlbumButton } from "@/components/admin/DeleteAlbumButton";
+import { DeleteRealtorButton } from "@/components/admin/DeleteRealtorButton";
 
 export default async function AdminRealtorDetailPage({
   params,
@@ -83,6 +84,17 @@ export default async function AdminRealtorDetailPage({
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="mt-12 rounded-2xl border border-red-100 bg-red-50/30 p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-red-800/80">Danger zone</h2>
+          <p className="mt-2 text-sm text-zinc-600">
+            Deleting this realtor removes all their albums and images. Linked jobs stay but are unlinked from this
+            realtor.
+          </p>
+          <div className="mt-4">
+            <DeleteRealtorButton realtorId={realtor.id} realtorName={realtor.name} />
+          </div>
         </section>
       </div>
     </main>

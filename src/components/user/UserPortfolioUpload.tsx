@@ -23,10 +23,18 @@ export function UserPortfolioUpload({ onUploaded }: { onUploaded?: () => void })
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage({ type: "err", text: data.error || "Upload failed." });
+        const detail =
+          data.error ||
+          (Array.isArray(data.errors) ? data.errors.join(" ") : null) ||
+          "Upload failed.";
+        setMessage({ type: "err", text: detail });
         return;
       }
-      setMessage({ type: "ok", text: `Uploaded ${data.uploaded} image(s).` });
+      let ok = `Uploaded ${data.uploaded} image(s).`;
+      if (Array.isArray(data.errors) && data.errors.length) {
+        ok += ` Some files failed: ${data.errors.join("; ")}`;
+      }
+      setMessage({ type: "ok", text: ok });
       if (inputRef.current) inputRef.current.value = "";
       onUploaded?.();
       window.location.reload();
@@ -40,13 +48,13 @@ export function UserPortfolioUpload({ onUploaded }: { onUploaded?: () => void })
   return (
     <div className="space-y-4">
       <p className="text-sm text-zinc-600">
-        Upload images to your personal portfolio. JPG, PNG, WebP, or GIF.
+        Upload images to your personal portfolio (Cloudflare R2). JPG, PNG, WebP, GIF, or HEIC.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
           multiple
           onChange={handleUpload}
           disabled={uploading}

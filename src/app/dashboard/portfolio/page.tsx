@@ -3,11 +3,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { UserPortfolioUpload } from "@/components/user/UserPortfolioUpload";
+import { getR2Config, getR2PublicUrl, normalizePortfolioR2Key } from "@/lib/r2/client";
 
-function getPortfolioImageUrl(storageKey: string): string {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return "";
-  return `${url}/storage/v1/object/public/portfolio/${storageKey}`;
+function getPersonalPortfolioImageUrl(storageKey: string): string {
+  if (!getR2Config().configured) return "";
+  try {
+    return getR2PublicUrl(normalizePortfolioR2Key(storageKey));
+  } catch {
+    return "";
+  }
 }
 
 export default async function DashboardPortfolioPage() {
@@ -42,7 +46,7 @@ export default async function DashboardPortfolioPage() {
         </div>
 
         <p className="mt-2 text-sm text-zinc-600">
-          Images you upload here are only visible to you when you’re signed in.
+          Images you upload here are only visible to you when you’re signed in. Files are stored in Cloudflare R2.
         </p>
 
         <section className="mt-8">
@@ -52,7 +56,7 @@ export default async function DashboardPortfolioPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items?.length ? (
             items.map((item) => {
-              const src = getPortfolioImageUrl(item.drive_file_id);
+              const src = getPersonalPortfolioImageUrl(item.drive_file_id);
               if (!src) return null;
               return (
                 <div

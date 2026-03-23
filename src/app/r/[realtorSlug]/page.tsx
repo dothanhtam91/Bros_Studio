@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RealtorHeader } from "@/components/delivery/RealtorHeader";
 import { AlbumCard } from "@/components/delivery/AlbumCard";
+import { RealtorSelfEditPanel } from "@/components/realtor/RealtorSelfEditPanel";
 
 export default async function RealtorPortfolioPage({
   params,
@@ -10,10 +11,13 @@ export default async function RealtorPortfolioPage({
 }) {
   const { realtorSlug } = await params;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: realtor } = await supabase
     .from("realtors")
-    .select("id, slug, name, headshot_url, brokerage, phone, email")
+    .select("id, slug, user_id, name, headshot_url, brokerage, phone, email, title, website, brokerage_logo_url, tagline, instagram, facebook, linkedin")
     .eq("slug", realtorSlug)
     .single();
 
@@ -47,10 +51,13 @@ export default async function RealtorPortfolioPage({
     realtor_slug: realtor.slug,
   }));
 
+  const isOwner = Boolean(user?.id && realtor.user_id === user.id);
+
   return (
     <main className="min-h-screen bg-stone-50 pt-24">
       <RealtorHeader realtor={realtor} />
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+        {isOwner && <RealtorSelfEditPanel realtor={realtor} />}
         <h2 className="mb-8 text-2xl font-semibold tracking-tight text-stone-900 border-b border-amber-200/60 pb-2 inline-block">
           Albums
         </h2>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getR2Config, uploadToR2 } from "@/lib/r2/client";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -10,42 +11,52 @@ export async function POST(request: Request) {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  if (!getR2Config().configured) {
+    return NextResponse.json(
+      {
+        error:
+          "R2 is not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, and R2_PUBLIC_URL.",
+      },
+      { status: 503 }
+    );
+  }
+
   const formData = await request.formData();
   const files = formData.getAll("files") as File[];
   if (!files.length) return NextResponse.json({ error: "No files" }, { status: 400 });
 
   const admin = createAdminClient();
 
-  const bucket = "portfolio";
-  const { error: bucketErr } = await admin.storage.getBucket(bucket);
-  if (bucketErr) {
-    const { error: createErr } = await admin.storage.createBucket(bucket, { public: true });
-    if (createErr) {
-      return NextResponse.json(
-        { error: `Could not create storage bucket: ${createErr.message}. Create a "portfolio" bucket in Supabase Dashboard → Storage.` },
-        { status: 500 }
-      );
-    }
-  }
-
   const { count } = await admin.from("portfolio_items").select("id", { count: "exact", head: true });
   let sortOrder = count ?? 0;
 
   const inserted: { id: string; name: string }[] = [];
+  const errors: string[] = [];
 
   for (const file of files) {
-    if (!file.name || !/\.(jpg|jpeg|png|webp|gif)$/i.test(file.name)) continue;
+    if (!file.name || !/\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(file.name)) {
+      if (file.name) errors.push(`${file.name}: use JPG, PNG, WebP, GIF, or HEIC`);
+      continue;
+    }
 
     const ext = file.name.split(".").pop() || "jpg";
-    const key = `${crypto.randomUUID()}.${ext}`;
+    const key = `portfolio/${crypto.randomUUID()}.${ext}`;
 
     const buf = await file.arrayBuffer();
-    const { error: uploadError } = await admin.storage.from(bucket).upload(key, buf, {
-      contentType: file.type,
-      upsert: true,
-    });
+    const contentType =
+      file.type ||
+      (/\.heic$/i.test(file.name)
+        ? "image/heic"
+        : /\.heif$/i.test(file.name)
+          ? "image/heif"
+          : "image/jpeg");
 
-    if (uploadError) continue;
+    try {
+      await uploadToR2(key, Buffer.from(buf), contentType);
+    } catch (e) {
+      errors.push(`${file.name}: ${e instanceof Error ? e.message : "Upload failed"}`);
+      continue;
+    }
 
     const { data: row, error: insertError } = await admin
       .from("portfolio_items")
@@ -58,8 +69,25 @@ export async function POST(request: Request) {
       .select("id, name")
       .single();
 
-    if (!insertError && row) inserted.push(row);
+    if (insertError) {
+      errors.push(`${file.name}: ${insertError.message}`);
+      continue;
+    }
+    if (row) inserted.push(row);
   }
 
-  return NextResponse.json({ uploaded: inserted.length });
+  if (inserted.length === 0 && files.length > 0) {
+    return NextResponse.json(
+      {
+        uploaded: 0,
+        errors,
+        error:
+          errors[0] ??
+          "No images were saved. Check R2 credentials and that the bucket allows uploads.",
+      },
+      { status: 400 }
+    );
+  }
+
+  return NextResponse.json({ uploaded: inserted.length, errors: errors.length ? errors : undefined });
 }

@@ -53,9 +53,17 @@ interface AnalyticsJobsTableProps {
   /** When provided, filters are controlled by parent (e.g. click-to-filter from charts). */
   filters?: AnalyticsJobsTableFilters;
   onFiltersChange?: (f: AnalyticsJobsTableFilters) => void;
+  /** Limit jobs to those created in this window (ISO strings, inclusive). */
+  createdFrom?: string;
+  createdTo?: string;
 }
 
-export function AnalyticsJobsTable({ filters, onFiltersChange }: AnalyticsJobsTableProps) {
+export function AnalyticsJobsTable({
+  filters,
+  onFiltersChange,
+  createdFrom,
+  createdTo,
+}: AnalyticsJobsTableProps) {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -88,11 +96,17 @@ export function AnalyticsJobsTable({ filters, onFiltersChange }: AnalyticsJobsTa
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [createdFrom, createdTo]);
+
+  useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
     if (sourceFilter) params.set("source", sourceFilter);
     if (realtorIdFilter) params.set("realtor_id", realtorIdFilter);
+    if (createdFrom) params.set("from", createdFrom);
+    if (createdTo) params.set("to", createdTo);
     params.set("sort", sort);
     params.set("page", String(page));
     params.set("limit", String(limit));
@@ -104,15 +118,14 @@ export function AnalyticsJobsTable({ filters, onFiltersChange }: AnalyticsJobsTa
       })
       .catch(() => setJobs([]))
       .finally(() => setLoading(false));
-  }, [statusFilter, sourceFilter, realtorIdFilter, sort, page]);
+  }, [statusFilter, sourceFilter, realtorIdFilter, sort, page, createdFrom, createdTo]);
 
   const totalPages = Math.ceil(total / limit);
   const hasActiveFilters = !!(statusFilter || sourceFilter || realtorIdFilter);
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold text-stone-900">Jobs</h2>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
         <div className="flex flex-wrap items-center gap-2">
           {hasActiveFilters && (
             <button

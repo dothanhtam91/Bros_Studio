@@ -13,14 +13,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+function metadataBaseUrl(): URL | undefined {
+  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!raw) return undefined;
+  try {
+    return new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+  } catch {
+    return undefined;
+  }
+}
+
 export const metadata: Metadata = {
+  // Production: set NEXT_PUBLIC_APP_URL=https://yourdomain.com so favicon <link> URLs are absolute (better for Google).
+  metadataBase: metadataBaseUrl(),
   title: "BrosStudio | Luxury Real Estate Photography",
   description:
     "MLS-ready photos. Luxury delivery. 24–48h turnaround. Trusted by Houston agents.",
-  icons: {
-    icon: [{ url: "/logo.png", type: "image/png" }],
-    apple: "/logo.png",
-  },
+  // Favicons: app/icon.png + app/apple-icon.png (copies of logo). /favicon.ico rewrites to /logo.png in next.config.
 };
 
 export default function RootLayout({

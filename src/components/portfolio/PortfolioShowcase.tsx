@@ -41,24 +41,24 @@ export function PortfolioShowcase({
 
   return (
     <section
-      className="relative border-t border-zinc-200/60 px-4 py-12 sm:px-6 sm:py-14 lg:px-8"
+      className="px-4 pb-16 pt-6 sm:px-6 sm:pb-20 sm:pt-8 lg:px-8"
       aria-label="Gallery"
     >
       <div className="mx-auto max-w-6xl">
-        <p className="mb-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-          Collection
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
           {items.slice(0, 12).map((item, i) => (
-            <ShowcaseTile
+            <div
               key={`${item.src}-${i}`}
-              src={item.src}
-              alt={item.alt}
-              size={getSize(i)}
-              category={item.category}
-              title={item.title}
-              unoptimized={item.unoptimized}
-            />
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(i * 60, 300)}ms` }}
+            >
+              <ShowcaseTile
+                src={item.src}
+                alt={item.alt}
+                size={getSize(i)}
+                unoptimized={item.unoptimized}
+              />
+            </div>
           ))}
         </div>
       </div>

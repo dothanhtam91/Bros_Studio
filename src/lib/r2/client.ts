@@ -116,7 +116,22 @@ export function getR2PublicUrl(key: string): string {
 }
 
 const PORTFOLIO_PREFIX = "portfolio/";
-const IMAGE_EXT = /\.(jpg|jpeg|png|webp|gif)$/i;
+const IMAGE_EXT = /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i;
+
+/** Stored DB path may be full R2 key or legacy flat filename — normalize to full key under portfolio/. */
+export function normalizePortfolioR2Key(driveFileId: string): string {
+  const k = driveFileId.trim();
+  if (k.startsWith("portfolio/")) return k;
+  return `${PORTFOLIO_PREFIX}${k.replace(/^\//, "")}`;
+}
+
+/**
+ * List image keys in R2 under "portfolio/" excluding personal uploads (portfolio/user/...).
+ */
+export async function listR2StudioPortfolioKeys(): Promise<{ key: string; folder: string }[]> {
+  const all = await listR2PortfolioKeys();
+  return all.filter((item) => !item.key.startsWith(`${PORTFOLIO_PREFIX}user/`));
+}
 
 /**
  * List image keys in R2 under the portfolio prefix.

@@ -98,3 +98,113 @@ export async function sendDeliveryEmail(
     return { ok: false, error: message };
   }
 }
+
+/** Recipients for internal notifications (videography inquiries, etc.). */
+export function getAdminNotificationRecipients(): string[] {
+  const explicit = (process.env.ADMIN_NOTIFICATION_EMAIL ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (explicit.length) return explicit;
+  const contact = (process.env.CONTACT_EMAIL ?? "").trim();
+  if (contact) return [contact];
+  const first = (process.env.BROSTUDIO_FIRST_ADMIN_EMAIL ?? "").trim();
+  if (first) return [first];
+  const list = (process.env.BROSTUDIO_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return list;
+}
+
+export type SendVideographyInquiryParams = {
+  adminRecipients: string[];
+  fromName: string;
+  fromEmail: string;
+  phone?: string | null;
+  serviceLabel: string;
+  serviceId: string;
+  message?: string | null;
+};
+
+/**
+ * Notify admin(s) when a visitor requests a videography quote from the packages page.
+ */
+export async function sendVideographyInquiryEmail(
+  params: SendVideographyInquiryParams
+): Promise<SendDeliveryEmailResult> {
+  const { adminRecipients, fromName, fromEmail, phone, serviceLabel, serviceId, message } = params;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey?.trim()) {
+    return {
+      ok: false,
+      error:
+        "Email not configured. Add RESEND_API_KEY to your environment (and RESEND_FROM_EMAIL for production).",
+    };
+  }
+
+  if (!adminRecipients.length) {
+    return {
+      ok: false,
+      error:
+        "No admin notification email configured. Set ADMIN_NOTIFICATION_EMAIL, CONTACT_EMAIL, or BROSTUDIO_FIRST_ADMIN_EMAIL.",
+    };
+  }
+
+  const fromAddress =
+    process.env.RESEND_FROM_EMAIL || "BrosStudio <onboarding@resend.dev>";
+
+  const lines = [
+    `New videography inquiry from the Packages page`,
+    ``,
+    `Service: ${serviceLabel} (${serviceId})`,
+    `Name: ${fromName}`,
+    `Email: ${fromEmail}`,
+    phone?.trim() ? `Phone: ${phone.trim()}` : null,
+    message?.trim() ? `\nMessage:\n${message.trim()}` : null,
+    ``,
+    `Reply directly to this email to reach the customer (Reply-To is set).`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#fafaf9; color:#18181b; padding:24px;">
+  <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e7e5e4;border-radius:16px;padding:24px;">
+    <p style="margin:0 0 16px;font-size:15px;font-weight:600;color:#292524;">Videography inquiry — BrosStudio</p>
+    <table style="width:100%;font-size:14px;line-height:1.6;color:#3f3f46;">
+      <tr><td style="padding:4px 0;color:#78716c;width:100px;">Service</td><td>${escapeHtml(serviceLabel)}</td></tr>
+      <tr><td style="padding:4px 0;color:#78716c;">Name</td><td>${escapeHtml(fromName)}</td></tr>
+      <tr><td style="padding:4px 0;color:#78716c;">Email</td><td><a href="mailto:${escapeHtml(fromEmail)}">${escapeHtml(fromEmail)}</a></td></tr>
+      ${phone?.trim() ? `<tr><td style="padding:4px 0;color:#78716c;">Phone</td><td>${escapeHtml(phone.trim())}</td></tr>` : ""}
+    </table>
+    ${message?.trim() ? `<p style="margin:16px 0 0;font-size:14px;"><strong>Message</strong></p><p style="margin:8px 0 0;font-size:14px;color:#52525b;white-space:pre-wrap;">${escapeHtml(message.trim())}</p>` : ""}
+  </div>
+</body>
+</html>`;
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: adminRecipients,
+      replyTo: fromEmail.trim(),
+      subject: `Videography quote request: ${serviceLabel} — ${fromName}`,
+      html,
+      text: lines,
+    });
+
+    if (error) {
+      return { ok: false, error: error.message || "Failed to send email" };
+    }
+    return { ok: true, messageId: data?.id ?? "sent" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Failed to send email";
+    return { ok: false, error: msg };
+  }
+}

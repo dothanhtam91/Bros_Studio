@@ -3,13 +3,12 @@
 import Link from "next/link";
 
 const CATEGORIES = [
-  "All",
-  "Luxury",
-  "Residential",
-  "Condo",
-  "Townhome",
-  "Commercial",
-  "Night",
+  { label: "All", value: null },
+  { label: "Drone", value: "drone" },
+  { label: "Interior", value: "interior" },
+  { label: "Exterior", value: "exterior" },
+  { label: "Twilight", value: "twilight" },
+  { label: "Detailed", value: "detailed" },
 ] as const;
 
 export function PortfolioCategoryNav({
@@ -19,38 +18,29 @@ export function PortfolioCategoryNav({
 }) {
   return (
     <section
-      className="relative border-t border-zinc-200/60 bg-zinc-50/50 px-4 py-5 sm:px-6 lg:px-8"
+      className="px-4 py-4 sm:px-6 sm:py-5 lg:px-8"
       aria-label="Filter collection"
     >
-      <div className="mx-auto max-w-5xl">
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-          Explore by type
-        </p>
-        <div className="rounded-xl border border-zinc-200/80 bg-white/80 px-3 py-2 shadow-[0_1px_4px_rgba(0,0,0,0.03)] backdrop-blur-sm">
-          <div className="flex gap-1 overflow-x-auto py-0.5 scrollbar-hide sm:flex-wrap sm:gap-1.5 sm:overflow-visible">
-            {CATEGORIES.map((cat) => {
-              const isActive =
-                (currentType == null && cat === "All") ||
-                currentType === cat.toLowerCase();
-              return (
-                <Link
-                  key={cat}
-                  href={
-                    cat === "All"
-                      ? "/portfolio"
-                      : `/portfolio?type=${cat.toLowerCase()}`
-                  }
-                  className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? "bg-amber-500/12 text-amber-900 ring-1 ring-amber-400/25"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                  }`}
-                >
-                  {cat}
-                </Link>
-              );
-            })}
-          </div>
+      <div className="mx-auto max-w-6xl animate-fade-in-up">
+        <div className="flex gap-2 overflow-x-auto py-0.5 scrollbar-hide sm:flex-wrap sm:overflow-visible">
+          {CATEGORIES.map((cat) => {
+            const isActive =
+              (currentType == null && cat.value == null) ||
+              currentType === cat.value;
+            return (
+              <Link
+                key={cat.label}
+                href={cat.value == null ? "/portfolio" : `/portfolio?type=${cat.value}`}
+                className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ease-out ${
+                  isActive
+                    ? "border border-amber-200/90 bg-amber-50 text-stone-800 shadow-sm"
+                    : "border border-transparent bg-white/70 text-zinc-600 hover:border-zinc-200 hover:bg-white hover:text-zinc-900"
+                }`}
+              >
+                {cat.label}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

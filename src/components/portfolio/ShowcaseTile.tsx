@@ -8,17 +8,11 @@ export function ShowcaseTile({
   src,
   alt,
   size = "medium",
-  category,
-  title,
-  serviceType,
   unoptimized = false,
 }: {
   src: string;
   alt: string;
   size?: Size;
-  category?: string;
-  title?: string;
-  serviceType?: string;
   unoptimized?: boolean;
 }) {
   const sizeClasses = {
@@ -32,13 +26,13 @@ export function ShowcaseTile({
 
   return (
     <div
-      className={`group relative overflow-hidden bg-zinc-200/90 ring-1 ring-zinc-200/60 transition-shadow duration-300 hover:ring-zinc-300/70 ${sizeClasses[size]}`}
+      className={`group relative overflow-hidden bg-zinc-200/90 ring-1 ring-zinc-200/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:ring-zinc-300 ${sizeClasses[size]}`}
     >
       <Image
         src={src}
         alt={alt}
         fill
-        className="object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
+        className="object-cover transition duration-500 ease-out group-hover:scale-[1.02]"
         sizes={
           size === "featured"
             ? "(max-width: 640px) 100vw, 66vw"
@@ -48,23 +42,6 @@ export function ShowcaseTile({
         }
         unoptimized={unoptimized}
       />
-      {/* Bottom overlay — editorial label on hover */}
-      <div
-        className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/35 to-transparent pt-12 pb-3 px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        aria-hidden
-      >
-        {category && (
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400/90">
-            {category}
-          </span>
-        )}
-        {title && (
-          <p className="mt-0.5 text-sm font-medium text-white/95">{title}</p>
-        )}
-        {serviceType && (
-          <p className="mt-0.5 text-xs text-white/75">{serviceType}</p>
-        )}
-      </div>
     </div>
   );
 }

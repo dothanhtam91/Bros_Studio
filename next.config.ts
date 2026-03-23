@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Google and many clients request /favicon.ico explicitly; serve the same asset as public logo.
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/logo.png" }];
+  },
   // Keep large deps out of serverless bundle (avoids Vercel 250 MB limit)
   serverExternalPackages: [
     "sharp",
