@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { readdirSync } from "fs";
 import { join } from "path";
-import { PortfolioIntro } from "@/components/portfolio/PortfolioIntro";
-import { PortfolioCategoryNav } from "@/components/portfolio/PortfolioCategoryNav";
-import { PortfolioShowcase } from "@/components/portfolio/PortfolioShowcase";
+import { PortfolioHero } from "@/components/portfolio/PortfolioHero";
+import { PortfolioFilters } from "@/components/portfolio/PortfolioFilters";
+import { PortfolioGrid } from "@/components/portfolio/PortfolioGrid";
+import { PortfolioCTA } from "@/components/portfolio/PortfolioCTA";
 import {
   getR2Config,
   getR2PublicUrl,
@@ -29,7 +30,7 @@ function getLocalPortfolioImages(): { src: string; folder: string }[] {
       items.push({ src: `/portfolio/${f}`, folder: "portfolio" })
     );
   } catch {
-    // portfolio folder may not exist
+    /* portfolio folder may not exist */
   }
 
   try {
@@ -39,7 +40,7 @@ function getLocalPortfolioImages(): { src: string; folder: string }[] {
       items.push({ src: `/portfolio/v1/${f}`, folder: "v1" })
     );
   } catch {
-    // v1 folder may not exist
+    /* v1 folder may not exist */
   }
 
   try {
@@ -49,7 +50,7 @@ function getLocalPortfolioImages(): { src: string; folder: string }[] {
       items.push({ src: `/portfolio/v2/MLS/${f}`, folder: "MLS" })
     );
   } catch {
-    // v2/MLS may not exist
+    /* v2/MLS may not exist */
   }
 
   return items;
@@ -73,7 +74,6 @@ export default async function PortfolioPage({
 
   const portfolioItems: PortfolioItem[] = [];
 
-  // Studio portfolio: R2 only — DB rows (metadata) + orphan objects listed from the bucket
   if (getR2Config().configured) {
     const dbKeys = new Set<string>();
     const hasSupabase =
@@ -113,7 +113,6 @@ export default async function PortfolioPage({
     }
   }
 
-  // Local public/portfolio images (if R2 not configured or nothing to show yet)
   if (portfolioItems.length === 0) {
     localImages.forEach((item, i) => {
       portfolioItems.push({
@@ -125,11 +124,22 @@ export default async function PortfolioPage({
     });
   }
 
+  const featured = portfolioItems.slice(0, 5).map((i) => ({
+    src: i.src,
+    alt: i.alt,
+    unoptimized: i.unoptimized,
+  }));
+
   return (
     <main className="min-h-screen bg-[var(--background)] pt-16">
-      <PortfolioIntro />
-      <PortfolioCategoryNav currentType={type ?? null} />
-      <PortfolioShowcase items={portfolioItems} currentType={type ?? null} />
+      <PortfolioHero featured={featured} />
+      <PortfolioFilters currentType={type ?? null} />
+      <PortfolioGrid
+        items={portfolioItems}
+        currentType={type ?? null}
+        allItems={portfolioItems}
+      />
+      <PortfolioCTA />
     </main>
   );
 }

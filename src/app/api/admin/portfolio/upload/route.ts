@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getR2Config, uploadToR2 } from "@/lib/r2/client";
+import { parseStudioPortfolioCategory } from "@/lib/portfolioCategories";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const files = formData.getAll("files") as File[];
   if (!files.length) return NextResponse.json({ error: "No files" }, { status: 400 });
+
+  const folderLabelRaw = formData.get("folder_label");
+  const folderLabel = parseStudioPortfolioCategory(
+    typeof folderLabelRaw === "string" ? folderLabelRaw : null
+  );
 
   const admin = createAdminClient();
 
@@ -63,7 +69,7 @@ export async function POST(request: Request) {
       .insert({
         drive_file_id: key,
         name: file.name,
-        folder_label: "Portfolio",
+        folder_label: folderLabel,
         sort_order: sortOrder++,
       })
       .select("id, name")

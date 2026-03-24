@@ -2,8 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
+  const origin =
+    request.nextUrl.origin ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000";
   const response = NextResponse.redirect(
-    new URL("/", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+    new URL("/", origin),
     { status: 302 }
   );
 
