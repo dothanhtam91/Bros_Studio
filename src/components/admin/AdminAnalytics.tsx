@@ -28,6 +28,8 @@ type Summary = AnalyticsSummaryPayload | null;
 
 interface AdminAnalyticsProps {
   summary: Summary;
+  /** Set when env is wrong or buildAnalyticsSummary throws (e.g. missing service role key). */
+  loadError?: string | null;
   range: { startISO: string; endISO: string; label: string };
 }
 
@@ -48,7 +50,7 @@ const statusOrder = [
   "cancelled",
 ];
 
-export function AdminAnalytics({ summary, range }: AdminAnalyticsProps) {
+export function AdminAnalytics({ summary, loadError, range }: AdminAnalyticsProps) {
   const [tableFilters, setTableFilters] = useState<AnalyticsJobsTableFilters>({
     status: "",
     source: "",
@@ -58,6 +60,18 @@ export function AdminAnalytics({ summary, range }: AdminAnalyticsProps) {
   const handleFilter = useCallback((updates: Partial<AnalyticsJobsTableFilters>) => {
     setTableFilters((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  if (loadError) {
+    return (
+      <div className="mt-10 rounded-2xl border border-amber-200/90 bg-amber-50/90 p-6 shadow-sm sm:p-8">
+        <h2 className="text-lg font-semibold text-amber-950">Analytics can&apos;t load</h2>
+        <p className="mt-3 text-sm leading-relaxed text-amber-900/90">{loadError}</p>
+        <p className="mt-4 text-xs text-amber-800/80">
+          After updating environment variables, trigger a new deployment so the server picks them up.
+        </p>
+      </div>
+    );
+  }
 
   if (!summary) {
     return (

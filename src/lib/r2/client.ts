@@ -138,31 +138,36 @@ export async function listR2StudioPortfolioKeys(): Promise<{ key: string; folder
  * Used so uploads to R2 under "portfolio/" automatically appear on the portfolio page.
  */
 export async function listR2PortfolioKeys(): Promise<{ key: string; folder: string }[]> {
-  const client = getR2Client();
-  if (!bucket) return [];
+  if (!getR2Config().configured || !bucket) return [];
 
   const items: { key: string; folder: string }[] = [];
-  let continuationToken: string | undefined;
+  try {
+    const client = getR2Client();
+    let continuationToken: string | undefined;
 
-  do {
-    const response = await client.send(
-      new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: PORTFOLIO_PREFIX,
-        ContinuationToken: continuationToken,
-      })
-    );
+    do {
+      const response = await client.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: PORTFOLIO_PREFIX,
+          ContinuationToken: continuationToken,
+        })
+      );
 
-    for (const obj of response.Contents ?? []) {
-      const key = obj.Key;
-      if (!key || !IMAGE_EXT.test(key)) continue;
-      const parts = key.slice(PORTFOLIO_PREFIX.length).split("/");
-      const folder = parts.length > 1 ? parts[0]! : "portfolio";
-      items.push({ key, folder });
-    }
+      for (const obj of response.Contents ?? []) {
+        const key = obj.Key;
+        if (!key || !IMAGE_EXT.test(key)) continue;
+        const parts = key.slice(PORTFOLIO_PREFIX.length).split("/");
+        const folder = parts.length > 1 ? parts[0]! : "portfolio";
+        items.push({ key, folder });
+      }
 
-    continuationToken = response.NextContinuationToken;
-  } while (continuationToken);
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+  } catch (err) {
+    console.error("[R2] listR2PortfolioKeys failed:", err);
+    return [];
+  }
 
   return items.sort((a, b) => a.key.localeCompare(b.key));
 }

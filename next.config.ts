@@ -1,5 +1,27 @@
 import type { NextConfig } from "next";
 
+function r2ImageRemotePattern():
+  | { protocol: "https"; hostname: string; pathname: string; search: string }
+  | null {
+  const raw = process.env.R2_PUBLIC_URL?.trim();
+  if (!raw) return null;
+  try {
+    const href = raw.startsWith("http") ? raw : `https://${raw}`;
+    const hostname = new URL(href).hostname;
+    if (!hostname) return null;
+    return {
+      protocol: "https",
+      hostname,
+      pathname: "/**",
+      search: "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+const r2Pattern = r2ImageRemotePattern();
+
 const nextConfig: NextConfig = {
   // Google and many clients request /favicon.ico explicitly; serve the same asset as public logo.
   async rewrites() {
@@ -26,16 +48,7 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
         search: "",
       },
-      ...(process.env.R2_PUBLIC_URL
-        ? [
-            {
-              protocol: "https" as const,
-              hostname: new URL(process.env.R2_PUBLIC_URL).hostname,
-              pathname: "/**",
-              search: "",
-            },
-          ]
-        : []),
+      ...(r2Pattern ? [r2Pattern] : []),
     ],
   },
 };

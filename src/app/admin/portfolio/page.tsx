@@ -21,12 +21,22 @@ export default async function AdminPortfolioPage() {
 
   const r2Ok = getR2Config().configured;
   const listItems =
-    rows?.map((row) => ({
-      id: row.id,
-      name: row.name,
-      folder_label: row.folder_label,
-      imageUrl: r2Ok ? getR2PublicUrl(normalizePortfolioR2Key(row.drive_file_id)) : null,
-    })) ?? [];
+    rows?.map((row) => {
+      let imageUrl: string | null = null;
+      if (r2Ok) {
+        try {
+          imageUrl = getR2PublicUrl(normalizePortfolioR2Key(row.drive_file_id));
+        } catch {
+          imageUrl = null;
+        }
+      }
+      return {
+        id: row.id,
+        name: row.name,
+        folder_label: row.folder_label,
+        imageUrl,
+      };
+    }) ?? [];
 
   return (
     <main className="min-h-screen pt-24 pb-20">

@@ -46,7 +46,8 @@ export async function POST(request: Request) {
     }
 
     const ext = file.name.split(".").pop() || "jpg";
-    const key = `portfolio/${crypto.randomUUID()}.${ext}`;
+    // Store under portfolio/{drone|interior|...}/ so R2 path matches the section (filters + orphan listing).
+    const key = `portfolio/${folderLabel}/${crypto.randomUUID()}.${ext}`;
 
     const buf = await file.arrayBuffer();
     const contentType =

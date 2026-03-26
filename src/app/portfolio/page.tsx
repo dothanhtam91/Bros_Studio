@@ -11,6 +11,7 @@ import {
   listR2StudioPortfolioKeys,
   normalizePortfolioR2Key,
 } from "@/lib/r2/client";
+import { resolveStudioPortfolioCategory } from "@/lib/portfolioCategories";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -74,43 +75,47 @@ export default async function PortfolioPage({
 
   const portfolioItems: PortfolioItem[] = [];
 
-  if (getR2Config().configured) {
-    const dbKeys = new Set<string>();
-    const hasSupabase =
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  try {
+    if (getR2Config().configured) {
+      const dbKeys = new Set<string>();
+      const hasSupabase =
+        process.env.NEXT_PUBLIC_SUPABASE_URL &&
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (hasSupabase) {
-      const supabase = await createClient();
-      const { data: uploadedItems } = await supabase
-        .from("portfolio_items")
-        .select("id, drive_file_id, name, folder_label")
-        .is("user_id", null)
-        .order("sort_order", { ascending: true });
+      if (hasSupabase) {
+        const supabase = await createClient();
+        const { data: uploadedItems } = await supabase
+          .from("portfolio_items")
+          .select("id, drive_file_id, name, folder_label")
+          .is("user_id", null)
+          .order("sort_order", { ascending: true });
 
-      for (const item of uploadedItems ?? []) {
-        const key = normalizePortfolioR2Key(item.drive_file_id);
-        dbKeys.add(key);
+        for (const item of uploadedItems ?? []) {
+          const key = normalizePortfolioR2Key(item.drive_file_id);
+          dbKeys.add(key);
+          portfolioItems.push({
+            src: getR2PublicUrl(key),
+            alt: item.name,
+            category: resolveStudioPortfolioCategory(item.folder_label, key),
+            title: item.name,
+            unoptimized: true,
+          });
+        }
+      }
+
+      const orphans = await listR2StudioPortfolioKeys();
+      for (const o of orphans) {
+        if (dbKeys.has(o.key)) continue;
         portfolioItems.push({
-          src: getR2PublicUrl(key),
-          alt: item.name,
-          category: item.folder_label ?? undefined,
-          title: item.name,
+          src: getR2PublicUrl(o.key),
+          alt: `Portfolio ${portfolioItems.length + 1}`,
+          category: resolveStudioPortfolioCategory(null, o.key) ?? (o.folder !== "portfolio" ? o.folder : undefined),
           unoptimized: true,
         });
       }
     }
-
-    const orphans = await listR2StudioPortfolioKeys();
-    for (const o of orphans) {
-      if (dbKeys.has(o.key)) continue;
-      portfolioItems.push({
-        src: getR2PublicUrl(o.key),
-        alt: `Portfolio ${portfolioItems.length + 1}`,
-        category: o.folder,
-        unoptimized: true,
-      });
-    }
+  } catch (err) {
+    console.error("[Portfolio] Failed to load gallery data:", err);
   }
 
   if (portfolioItems.length === 0) {

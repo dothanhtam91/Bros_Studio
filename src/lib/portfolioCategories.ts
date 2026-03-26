@@ -29,3 +29,30 @@ export function parseStudioPortfolioCategory(
   if (v && isStudioPortfolioCategorySlug(v)) return v;
   return fallback;
 }
+
+/**
+ * Studio public gallery: use DB folder_label when it is a known slug; otherwise infer from R2 key
+ * (`portfolio/drone/uuid.jpg` → `drone`). Skips `portfolio/user/...` (personal uploads).
+ */
+export function resolveStudioPortfolioCategory(
+  folder_label: string | null | undefined,
+  normalizedR2Key: string
+): string | undefined {
+  const label = folder_label?.trim();
+  if (label) {
+    const lower = label.toLowerCase();
+    if (isStudioPortfolioCategorySlug(lower)) return lower;
+    if (lower !== "portfolio" && lower !== "my portfolio") {
+      return lower;
+    }
+  }
+
+  const k = normalizedR2Key.trim();
+  const prefix = "portfolio/";
+  const rest = k.startsWith(prefix) ? k.slice(prefix.length) : k;
+  const segments = rest.split("/").filter(Boolean);
+  const first = segments[0];
+  if (!first || first === "user") return undefined;
+  if (isStudioPortfolioCategorySlug(first)) return first;
+  return undefined;
+}

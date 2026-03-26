@@ -21,9 +21,28 @@ export default async function AdminAnalyticsPage({
 
   const params = await searchParams;
   const range = parseAnalyticsRangeFromSearchParams(params);
-  const admin = createAdminClient();
-  const summary = await buildAnalyticsSummary(admin, range);
   const customDates = customRangeDefaults(range);
+
+  let analyticsLoadError: string | null = null;
+  let summary: Awaited<ReturnType<typeof buildAnalyticsSummary>> | null = null;
+
+  const hasServiceRole =
+    Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) &&
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim());
+
+  if (!hasServiceRole) {
+    analyticsLoadError =
+      "Analytics needs SUPABASE_SERVICE_ROLE_KEY on the server (same place as your other secrets—e.g. Vercel → Project → Settings → Environment Variables). It is not the anon key; copy the service_role key from Supabase → Project Settings → API. Redeploy after adding it.";
+  } else {
+    try {
+      const admin = createAdminClient();
+      summary = await buildAnalyticsSummary(admin, range);
+    } catch (err) {
+      console.error("[admin/analytics]", err);
+      analyticsLoadError =
+        err instanceof Error ? err.message : "Analytics failed to load. Check server logs.";
+    }
+  }
 
   return (
     <main className="min-h-screen bg-stone-50/80 pt-24 pb-20">
@@ -50,6 +69,7 @@ export default async function AdminAnalyticsPage({
 
         <AdminAnalytics
           summary={summary}
+          loadError={analyticsLoadError}
           range={{ startISO: range.startISO, endISO: range.endISO, label: range.label }}
         />
       </div>
