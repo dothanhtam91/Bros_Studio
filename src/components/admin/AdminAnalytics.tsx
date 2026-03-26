@@ -61,7 +61,7 @@ export function AdminAnalytics({ summary, loadError, range }: AdminAnalyticsProp
     setTableFilters((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  if (loadError) {
+  if (loadError && !summary) {
     return (
       <div className="mt-10 rounded-2xl border border-amber-200/90 bg-amber-50/90 p-6 shadow-sm sm:p-8">
         <h2 className="text-lg font-semibold text-amber-950">Analytics can&apos;t load</h2>
@@ -98,6 +98,15 @@ export function AdminAnalytics({ summary, loadError, range }: AdminAnalyticsProp
 
   return (
     <div className="mt-10 space-y-10">
+      {loadError && (
+        <div className="rounded-2xl border border-amber-200/90 bg-amber-50/90 p-4 text-sm text-amber-950 shadow-sm sm:p-5">
+          <p className="font-semibold">Partial or fallback data</p>
+          <p className="mt-1 leading-relaxed text-amber-900/90">{loadError}</p>
+          <p className="mt-2 text-xs text-amber-800/80">
+            Charts may show zeros. Check Vercel logs and Supabase migrations (jobs, revision_requests).
+          </p>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-stone-500">
           Metrics below use <span className="font-medium text-stone-700">{range.label}</span>. Job table is

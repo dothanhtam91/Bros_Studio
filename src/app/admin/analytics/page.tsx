@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -5,7 +6,26 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 import { AnalyticsRangePicker, customRangeDefaults } from "@/components/admin/AnalyticsRangePicker";
 import { parseAnalyticsRangeFromSearchParams } from "@/lib/admin/analyticsDateRange";
-import { buildAnalyticsSummary } from "@/lib/admin/analyticsSummary";
+import { buildAnalyticsSummary, emptyAnalyticsSummary } from "@/lib/admin/analyticsSummary";
+
+export const dynamic = "force-dynamic";
+
+function AnalyticsRangePickerSkeleton() {
+  return (
+    <div
+      className="mt-8 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5"
+      aria-busy
+      aria-label="Loading date range"
+    >
+      <div className="h-5 w-56 animate-pulse rounded bg-stone-200" />
+      <div className="mt-4 flex flex-wrap gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-9 w-24 animate-pulse rounded-xl bg-stone-100" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default async function AdminAnalyticsPage({
   searchParams,
@@ -19,8 +39,14 @@ export default async function AdminAnalyticsPage({
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") redirect("/dashboard");
 
-  const params = await searchParams;
-  const range = parseAnalyticsRangeFromSearchParams(params);
+  let range;
+  try {
+    const params = await searchParams;
+    range = parseAnalyticsRangeFromSearchParams(params ?? {});
+  } catch (e) {
+    console.error("[admin/analytics] parse range:", e);
+    range = parseAnalyticsRangeFromSearchParams({});
+  }
   const customDates = customRangeDefaults(range);
 
   let analyticsLoadError: string | null = null;
@@ -41,6 +67,7 @@ export default async function AdminAnalyticsPage({
       console.error("[admin/analytics]", err);
       analyticsLoadError =
         err instanceof Error ? err.message : "Analytics failed to load. Check server logs.";
+      summary = emptyAnalyticsSummary();
     }
   }
 
@@ -57,7 +84,7 @@ export default async function AdminAnalyticsPage({
           </p>
         </header>
 
-        <div className="mt-8">
+        <Suspense fallback={<AnalyticsRangePickerSkeleton />}>
           <AnalyticsRangePicker
             key={`${range.preset}-${range.startISO}-${range.endISO}`}
             preset={range.preset}
@@ -65,7 +92,7 @@ export default async function AdminAnalyticsPage({
             customTo={range.preset === "custom" ? customDates.to : undefined}
             rangeLabel={range.label}
           />
-        </div>
+        </Suspense>
 
         <AdminAnalytics
           summary={summary}

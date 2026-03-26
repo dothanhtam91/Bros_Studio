@@ -14,6 +14,10 @@ import {
 import { resolveStudioPortfolioCategory } from "@/lib/portfolioCategories";
 import { createClient } from "@/lib/supabase/server";
 
+/** Fresh data on every request (uploads and filters must not serve stale empty pages). */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Portfolio | BrosStudio",
   description:
@@ -74,44 +78,66 @@ export default async function PortfolioPage({
   const localImages = getLocalPortfolioImages();
 
   const portfolioItems: PortfolioItem[] = [];
+  const r2Ok = getR2Config().configured;
+  const hasSupabase =
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) &&
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim());
 
   try {
-    if (getR2Config().configured) {
-      const dbKeys = new Set<string>();
-      const hasSupabase =
-        process.env.NEXT_PUBLIC_SUPABASE_URL &&
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const dbKeys = new Set<string>();
 
-      if (hasSupabase) {
-        const supabase = await createClient();
-        const { data: uploadedItems } = await supabase
-          .from("portfolio_items")
-          .select("id, drive_file_id, name, folder_label")
-          .is("user_id", null)
-          .order("sort_order", { ascending: true });
+    // Load DB rows whenever Supabase is configured — do not gate on R2 (R2 only affects image URLs).
+    if (hasSupabase) {
+      const supabase = await createClient();
+      const { data: uploadedItems, error: dbError } = await supabase
+        .from("portfolio_items")
+        .select("id, drive_file_id, name, folder_label")
+        .is("user_id", null)
+        .order("sort_order", { ascending: true });
 
-        for (const item of uploadedItems ?? []) {
-          const key = normalizePortfolioR2Key(item.drive_file_id);
-          dbKeys.add(key);
+      if (dbError) {
+        console.error("[Portfolio] portfolio_items select:", dbError.message);
+      }
+
+      for (const item of uploadedItems ?? []) {
+        const key = normalizePortfolioR2Key(item.drive_file_id);
+        dbKeys.add(key);
+        const category = resolveStudioPortfolioCategory(item.folder_label, key);
+
+        if (!r2Ok) {
+          continue;
+        }
+
+        try {
           portfolioItems.push({
             src: getR2PublicUrl(key),
             alt: item.name,
-            category: resolveStudioPortfolioCategory(item.folder_label, key),
+            category,
             title: item.name,
             unoptimized: true,
           });
+        } catch (e) {
+          console.error("[Portfolio] Bad image URL for key:", key, e);
         }
       }
+    }
 
+    if (r2Ok) {
       const orphans = await listR2StudioPortfolioKeys();
       for (const o of orphans) {
         if (dbKeys.has(o.key)) continue;
-        portfolioItems.push({
-          src: getR2PublicUrl(o.key),
-          alt: `Portfolio ${portfolioItems.length + 1}`,
-          category: resolveStudioPortfolioCategory(null, o.key) ?? (o.folder !== "portfolio" ? o.folder : undefined),
-          unoptimized: true,
-        });
+        try {
+          portfolioItems.push({
+            src: getR2PublicUrl(o.key),
+            alt: `Portfolio ${portfolioItems.length + 1}`,
+            category:
+              resolveStudioPortfolioCategory(null, o.key) ??
+              (o.folder !== "portfolio" ? o.folder : undefined),
+            unoptimized: true,
+          });
+        } catch (e) {
+          console.error("[Portfolio] Orphan URL failed:", o.key, e);
+        }
       }
     }
   } catch (err) {

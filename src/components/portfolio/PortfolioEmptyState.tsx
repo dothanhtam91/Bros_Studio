@@ -14,10 +14,15 @@ export function PortfolioEmptyState({
   category,
   suggestions,
   onSuggestionClick,
+  filterMismatch,
+  totalInGallery,
 }: {
   category: string | null;
   suggestions: Suggestion[];
   onSuggestionClick?: (index: number) => void;
+  /** True when a category filter hides images that exist under other tags or uncategorized. */
+  filterMismatch?: boolean;
+  totalInGallery?: number;
 }) {
   return (
     <section className="px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -29,13 +34,31 @@ export function PortfolioEmptyState({
             </svg>
           </div>
           <h2 className="text-xl font-semibold tracking-tight text-stone-900">
-            {category
-              ? `${category.charAt(0).toUpperCase() + category.slice(1)} shots coming soon`
-              : "Gallery is being curated"}
+            {filterMismatch && totalInGallery
+              ? "Nothing in this category"
+              : category
+                ? `${category.charAt(0).toUpperCase() + category.slice(1)} shots coming soon`
+                : "Gallery is being curated"}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-            Fresh work is regularly added. Browse another collection or view all our work.
-          </p>
+          {filterMismatch && totalInGallery ? (
+            <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+              This portfolio has <span className="font-medium text-stone-800">{totalInGallery}</span> image
+              {totalInGallery === 1 ? "" : "s"}, but none match{" "}
+              <span className="font-medium capitalize text-stone-800">{category}</span>. Open{" "}
+              <Link href="/portfolio" className="font-medium text-amber-800 underline decoration-amber-300 underline-offset-2 hover:text-amber-950">
+                All
+              </Link>{" "}
+              to see everything, or in{" "}
+              <Link href="/admin/portfolio" className="font-medium text-amber-800 underline decoration-amber-300 underline-offset-2 hover:text-amber-950">
+                Admin → Portfolio
+              </Link>{" "}
+              set each image to Drone, Interior, Exterior, Twilight, or Detailed.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+              Fresh work is regularly added. Browse another collection or view all work.
+            </p>
+          )}
           <Link
             href="/portfolio"
             className="mt-5 inline-block rounded-xl border border-amber-200/90 bg-amber-50 px-5 py-2.5 text-sm font-semibold text-stone-800 transition hover:bg-amber-100/90"
@@ -49,6 +72,14 @@ export function PortfolioEmptyState({
             <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
               From other collections
             </p>
+            {filterMismatch && category && (
+              <p className="mx-auto mb-4 max-w-lg text-center text-xs leading-relaxed text-zinc-500">
+                These photos are tagged with another category, not{" "}
+                <span className="font-medium capitalize text-stone-700">{category}</span>. To show them under this
+                filter, open Admin → Portfolio and set each image&apos;s category to{" "}
+                <span className="font-medium capitalize text-stone-700">{category}</span>.
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {suggestions.map((img, i) => (
                 <button

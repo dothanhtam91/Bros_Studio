@@ -43,10 +43,17 @@ export function PortfolioGrid({
     const suggestions = allItems
       .filter((i) => i.category?.toLowerCase() !== currentType)
       .slice(0, 6);
+    const filterMismatch = Boolean(
+      currentType &&
+        currentType !== "all" &&
+        allItems.length > 0
+    );
     return (
       <PortfolioEmptyState
         category={currentType}
         suggestions={suggestions}
+        filterMismatch={filterMismatch}
+        totalInGallery={filterMismatch ? allItems.length : undefined}
         onSuggestionClick={(idx) => setLightboxIndex(idx)}
       />
     );

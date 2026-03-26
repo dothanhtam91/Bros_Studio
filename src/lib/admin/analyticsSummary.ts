@@ -62,6 +62,27 @@ export type AnalyticsSummaryPayload = {
   top_realtors_by_volume: { realtor_id: string; name: string; count: number }[];
 };
 
+/** Safe fallback when queries fail (missing tables, network, etc.). */
+export function emptyAnalyticsSummary(): AnalyticsSummaryPayload {
+  return {
+    jobs_created_in_period: 0,
+    in_progress_in_period: 0,
+    delivered_in_period: 0,
+    overdue_as_of_period_end: 0,
+    total_revision_requests_in_period: 0,
+    average_turnaround_days: null,
+    total_revenue: 0,
+    revenue_by_source: {},
+    website_bookings_in_period: 0,
+    admin_created_jobs_in_period: 0,
+    jobs_by_status: {},
+    bookings_by_week: [],
+    revenue_by_week: [],
+    turnaround_by_week: [],
+    top_realtors_by_volume: [],
+  };
+}
+
 export async function buildAnalyticsSummary(
   admin: AdminClient,
   range: ParsedAnalyticsRange
