@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
-import type { AnalyticsPreset, ParsedAnalyticsRange } from "@/lib/admin/analyticsDateRange";
+import type { AnalyticsPreset } from "@/lib/admin/analyticsDateRange";
 import { toDateInputValue } from "@/lib/admin/analyticsDateRange";
 
 const PRESETS: { id: AnalyticsPreset; label: string }[] = [
@@ -142,12 +142,4 @@ export function AnalyticsRangePicker({ preset, customFrom, customTo, rangeLabel 
       )}
     </div>
   );
-}
-
-/** Server helper: derive custom YYYY-MM-DD for picker initial state */
-export function customRangeDefaults(range: ParsedAnalyticsRange): { from: string; to: string } {
-  return {
-    from: toDateInputValue(range.start),
-    to: toDateInputValue(range.end),
-  };
 }

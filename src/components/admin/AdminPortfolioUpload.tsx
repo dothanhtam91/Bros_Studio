@@ -56,7 +56,8 @@ export function AdminPortfolioUpload() {
       <p className="text-sm text-zinc-600">
         Upload images from your computer (stored in Cloudflare R2). They appear on the public Portfolio under the{" "}
         <span className="font-medium text-stone-800">exact</span> category you select below (Drone, Interior, etc.).
-        Use JPG, PNG, WebP, GIF, or HEIC.
+        Use JPG, PNG, WebP, GIF, or HEIC. To remove an image later, use the{" "}
+        <span className="font-medium text-stone-800">Delete</span> button on that row in the gallery list below.
       </p>
       <fieldset className="space-y-2">
         <legend className="text-xs font-semibold uppercase tracking-wide text-zinc-500">

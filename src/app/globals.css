@@ -61,6 +61,23 @@ body {
   animation: fade-in-up 0.6s ease-out forwards;
 }
 
+/* Portfolio: softer entrance for gallery blocks */
+@keyframes portfolio-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-portfolio-rise {
+  animation: portfolio-rise 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
 .animate-fade-in {
   animation: fade-in 0.5s ease-out forwards;
 }
@@ -356,4 +373,25 @@ body {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Image loading skeleton (portfolio, lightbox, etc.) — matches site zinc neutrals */
+@keyframes image-shimmer-slide {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.image-loading-shimmer {
+  background: linear-gradient(
+    110deg,
+    #e4e4e7 0%,
+    #f4f4f5 45%,
+    #e4e4e7 90%
+  );
+  background-size: 200% 100%;
+  animation: image-shimmer-slide 1.8s ease-in-out infinite;
 }

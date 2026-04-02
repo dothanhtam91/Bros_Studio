@@ -33,7 +33,7 @@ export function PortfolioEmptyState({
               <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-stone-900">
+          <h2 className="text-xl font-semibold tracking-tight text-zinc-900">
             {filterMismatch && totalInGallery
               ? "Nothing in this category"
               : category
@@ -42,9 +42,9 @@ export function PortfolioEmptyState({
           </h2>
           {filterMismatch && totalInGallery ? (
             <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-              This portfolio has <span className="font-medium text-stone-800">{totalInGallery}</span> image
+              This portfolio has               <span className="font-medium text-zinc-900">{totalInGallery}</span> image
               {totalInGallery === 1 ? "" : "s"}, but none match{" "}
-              <span className="font-medium capitalize text-stone-800">{category}</span>. Open{" "}
+              <span className="font-medium capitalize text-zinc-900">{category}</span>. Open{" "}
               <Link href="/portfolio" className="font-medium text-amber-800 underline decoration-amber-300 underline-offset-2 hover:text-amber-950">
                 All
               </Link>{" "}

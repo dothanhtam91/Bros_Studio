@@ -114,3 +114,11 @@ export function toDateInputValue(d: Date): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+/** Server-safe: date inputs for analytics custom range (picker initial state). */
+export function customRangeDefaults(range: ParsedAnalyticsRange): { from: string; to: string } {
+  return {
+    from: toDateInputValue(range.start),
+    to: toDateInputValue(range.end),
+  };
+}

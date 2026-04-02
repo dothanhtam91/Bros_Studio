@@ -19,6 +19,7 @@ export type StudioPortfolioRow = {
 export function AdminStudioPortfolioList({ items }: { items: StudioPortfolioRow[] }) {
   const router = useRouter();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function updateCategory(id: string, folder_label: string) {
@@ -41,6 +42,31 @@ export function AdminStudioPortfolioList({ items }: { items: StudioPortfolioRow[
       setError("Request failed");
     } finally {
       setSavingId(null);
+    }
+  }
+
+  async function deleteItem(id: string, name: string) {
+    if (
+      !window.confirm(
+        `Delete this image from the studio portfolio?\n\n${name}\n\nThis removes it from the public Portfolio and deletes the file from storage (if configured).`
+      )
+    ) {
+      return;
+    }
+    setDeletingId(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/portfolio/items/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Delete failed");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Request failed");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -92,14 +118,14 @@ export function AdminStudioPortfolioList({ items }: { items: StudioPortfolioRow[
                   </p>
                 )}
               </div>
-              <div className="shrink-0 sm:w-44">
+              <div className="flex shrink-0 flex-col gap-2 sm:w-52">
                 <label className="sr-only" htmlFor={`cat-${item.id}`}>
                   Category for {item.name}
                 </label>
                 <select
                   id={`cat-${item.id}`}
                   value={valid ? raw : ""}
-                  disabled={savingId === item.id}
+                  disabled={savingId === item.id || deletingId === item.id}
                   onChange={(e) => {
                     const v = e.target.value;
                     if (v) void updateCategory(item.id, v);
@@ -114,8 +140,16 @@ export function AdminStudioPortfolioList({ items }: { items: StudioPortfolioRow[
                   ))}
                 </select>
                 {savingId === item.id && (
-                  <p className="mt-1 text-xs text-zinc-500">Saving…</p>
+                  <p className="text-xs text-zinc-500">Saving…</p>
                 )}
+                <button
+                  type="button"
+                  disabled={deletingId === item.id || savingId === item.id}
+                  onClick={() => void deleteItem(item.id, item.name)}
+                  className="w-full rounded-xl border border-red-200/90 bg-white px-3 py-2 text-sm font-medium text-red-700 transition hover:border-red-300 hover:bg-red-50 disabled:opacity-50"
+                >
+                  {deletingId === item.id ? "Deleting…" : "Delete"}
+                </button>
               </div>
             </li>
           );

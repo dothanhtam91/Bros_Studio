@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { readdirSync } from "fs";
 import { join } from "path";
-import { PortfolioHero } from "@/components/portfolio/PortfolioHero";
-import { PortfolioFilters } from "@/components/portfolio/PortfolioFilters";
-import { PortfolioGrid } from "@/components/portfolio/PortfolioGrid";
+import { Suspense } from "react";
+import { PortfolioPageClient } from "@/components/portfolio/PortfolioPageClient";
 import { PortfolioCTA } from "@/components/portfolio/PortfolioCTA";
 import {
   getR2Config,
@@ -21,7 +20,7 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: "Portfolio | BrosStudio",
   description:
-    "A curated collection of drone, interior, exterior, twilight, and detailed real estate imagery.",
+    "Interiors, exteriors, aerials, and twilight photography for listings that deserve a strong first impression.",
 };
 
 function getLocalPortfolioImages(): { src: string; folder: string }[] {
@@ -69,12 +68,7 @@ type PortfolioItem = {
   unoptimized: boolean;
 };
 
-export default async function PortfolioPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ type?: string }>;
-}) {
-  const { type } = await searchParams;
+export default async function PortfolioPage() {
   const localImages = getLocalPortfolioImages();
 
   const portfolioItems: PortfolioItem[] = [];
@@ -155,21 +149,15 @@ export default async function PortfolioPage({
     });
   }
 
-  const featured = portfolioItems.slice(0, 5).map((i) => ({
-    src: i.src,
-    alt: i.alt,
-    unoptimized: i.unoptimized,
-  }));
-
   return (
-    <main className="min-h-screen bg-[var(--background)] pt-16">
-      <PortfolioHero featured={featured} />
-      <PortfolioFilters currentType={type ?? null} />
-      <PortfolioGrid
-        items={portfolioItems}
-        currentType={type ?? null}
-        allItems={portfolioItems}
-      />
+    <main className="min-h-screen bg-[var(--background)] pb-20">
+      <Suspense
+        fallback={
+          <div className="min-h-[40vh] bg-[var(--background)] px-4 pt-8 sm:px-6 lg:px-8" aria-hidden />
+        }
+      >
+        <PortfolioPageClient items={portfolioItems} />
+      </Suspense>
       <PortfolioCTA />
     </main>
   );

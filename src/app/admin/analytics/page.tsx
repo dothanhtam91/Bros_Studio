@@ -4,8 +4,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
-import { AnalyticsRangePicker, customRangeDefaults } from "@/components/admin/AnalyticsRangePicker";
-import { parseAnalyticsRangeFromSearchParams } from "@/lib/admin/analyticsDateRange";
+import { AnalyticsRangePicker } from "@/components/admin/AnalyticsRangePicker";
+import {
+  customRangeDefaults,
+  parseAnalyticsRangeFromSearchParams,
+} from "@/lib/admin/analyticsDateRange";
 import { buildAnalyticsSummary, emptyAnalyticsSummary } from "@/lib/admin/analyticsSummary";
 
 export const dynamic = "force-dynamic";
