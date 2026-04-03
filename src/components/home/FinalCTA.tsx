@@ -2,7 +2,13 @@
 
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import { IconArrowRight } from "./icons";
+import { Check } from "lucide-react";
+
+const FEATURES = [
+  "Clear process",
+  "Elevated presentation",
+  "Confident launch",
+] as const;
 
 export function FinalCTA() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -21,152 +27,116 @@ export function FinalCTA() {
     return () => obs.disconnect();
   }, []);
 
+  const reveal = (delay: string, duration = "0.75s") =>
+    inView
+      ? {
+          animation: `final-cta-reveal ${duration} cubic-bezier(0.22,1,0.36,1) ${delay} both`,
+        }
+      : { opacity: 0 };
+
+  const checkPop = (index: number) =>
+    inView
+      ? {
+          animation: `final-cta-check-pop 0.5s cubic-bezier(0.34,1.3,0.64,1) ${0.38 + index * 0.09}s both`,
+        }
+      : { opacity: 0, transform: "scale(0.35)" };
+
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[65vh] items-center justify-center overflow-hidden py-24 sm:min-h-[70vh] sm:py-28"
+      className="relative flex min-h-[72vh] items-center justify-center overflow-hidden py-24 font-sans sm:min-h-[78vh] sm:py-32"
       aria-labelledby="final-cta-heading"
     >
-      {/* Background image — full bleed, real estate atmosphere */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url(/images/final-cta-bg.png)",
-        }}
-        aria-hidden
-      />
-
-      {/* Subtle dark overlay — preserves image, improves readability */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.42) 50%, rgba(0,0,0,0.48) 100%)",
-        }}
-        aria-hidden
-      />
-
-      {/* Focused vignette behind card — card area stands out naturally */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse 80% 70% at 50% 48%, transparent 0%, transparent 45%, rgba(0,0,0,0.25) 100%)`,
-        }}
-        aria-hidden
-      />
-
-      {/* Soft warm glow behind card — brand tie-in, very subtle */}
-      <div
-        className="absolute inset-0 flex items-center justify-center"
-        aria-hidden
-      >
+      <div className="absolute inset-0 overflow-hidden" aria-hidden>
         <div
-          className="h-[340px] w-full max-w-[560px] rounded-[48px] opacity-0 transition-opacity duration-700"
-          style={{
-            background: "radial-gradient(ellipse 80% 80% at 50% 50%, rgba(251,191,36,0.12) 0%, transparent 70%)",
-            opacity: inView ? 1 : 0,
-          }}
+          className="final-cta-bg-drift absolute inset-[-10%] bg-cover bg-center"
+          style={{ backgroundImage: "url(/images/final-cta-bg.png)" }}
         />
       </div>
 
-      {/* CTA card — integrated, premium, not popup-like */}
       <div
-        className="relative z-10 w-full px-4 sm:px-6"
+        className="absolute inset-0 bg-zinc-950/88"
         style={{
-          opacity: inView ? 1 : 0,
-          transform: inView ? "translateY(0)" : "translateY(20px)",
-          transition: "opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1)",
+          background:
+            "linear-gradient(180deg, rgba(9,9,11,0.88) 0%, rgba(9,9,11,0.92) 45%, rgba(9,9,11,0.94) 100%)",
         }}
-      >
-        <div
-          className="group mx-auto w-full max-w-[520px] rounded-[44px] border border-white/25 px-8 py-10 shadow-2xl transition-all duration-500 ease-out sm:px-10 sm:py-12 hover:-translate-y-1 hover:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.08)]"
-          style={{
-            background:
-              "linear-gradient(165deg, rgba(255,252,248,0.52) 0%, rgba(250,247,242,0.48) 50%, rgba(245,242,238,0.52) 100%)",
-            backdropFilter: "blur(20px) saturate(1.1)",
-            WebkitBackdropFilter: "blur(20px) saturate(1.1)",
-            boxShadow:
-              "0 24px 48px -16px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.12)",
-          }}
+        aria-hidden
+      />
+
+      <div
+        className="final-cta-amber-pulse absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 80% at 50% 20%, rgba(180,83,9,0.12) 0%, transparent 55%)",
+        }}
+        aria-hidden
+      />
+
+      <div className="section-noise absolute inset-0 opacity-[0.35]" aria-hidden />
+
+      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 text-center sm:px-6">
+        <p
+          className="text-[11px] font-semibold uppercase tracking-[0.26em] text-amber-500 sm:text-xs"
+          style={reveal("0.04s", "0.7s")}
         >
-          <div className="mx-auto max-w-[400px] text-center">
-            {/* Eyebrow — small, refined, premium */}
-            <p
-              className="text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-600/90"
-              style={
-                inView
-                  ? { animation: "final-cta-reveal 0.6s cubic-bezier(0.22,1,0.36,1) 0.06s both" }
-                  : { opacity: 0 }
-              }
-            >
-              READY WHEN YOU ARE
-            </p>
+          Ready when you are
+        </p>
 
-            {/* Headline — bold, confident */}
-            <h2
-              id="final-cta-heading"
-              className="mt-4 text-[1.75rem] font-bold leading-[1.2] tracking-tight text-zinc-900 sm:text-[2rem]"
-              style={
-                inView
-                  ? { animation: "final-cta-reveal 0.6s cubic-bezier(0.22,1,0.36,1) 0.12s both" }
-                  : { opacity: 0 }
-              }
-            >
-              Make Your Next Listing Feel Effortless
-            </h2>
+        <h2
+          id="final-cta-heading"
+          className="mt-5 text-[1.85rem] font-bold leading-[1.15] tracking-tight text-white sm:mt-6 sm:text-4xl md:text-[2.65rem] md:leading-[1.12]"
+          style={reveal("0.12s", "0.8s")}
+        >
+          Make Your Next Listing{" "}
+          <em className="font-semibold not-italic text-white/95 [font-style:italic]">Feel Effortless</em>
+        </h2>
 
-            {/* Body — clean, readable */}
-            <p
-              className="mt-5 text-[15px] leading-relaxed text-zinc-600"
-              style={
-                inView
-                  ? { animation: "final-cta-reveal 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both" }
-                  : { opacity: 0 }
-              }
-            >
-              A smooth, polished process designed to help you go from booking to launch with clarity and confidence.
-            </p>
+        <p
+          className="mx-auto mt-6 max-w-[26rem] text-[15px] leading-relaxed text-white/85 sm:mt-7 sm:max-w-md sm:text-base"
+          style={reveal("0.2s", "0.72s")}
+        >
+          A smooth, polished process designed to help you go from booking to launch with clarity and confidence.
+        </p>
 
-            {/* Buttons */}
-            <div
-              className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4"
-              style={
-                inView
-                  ? { animation: "final-cta-reveal 0.6s cubic-bezier(0.22,1,0.36,1) 0.28s both" }
-                  : { opacity: 0 }
-              }
-            >
-              <Link
-                href="/login"
-                className="group/btn inline-flex w-fit items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-[15px] font-semibold text-white transition-all duration-300 ease-out hover:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/30 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-[#f5f3ee]"
-                style={{
-                  boxShadow: "0 4px 14px -2px rgba(180,83,9,0.35)",
-                }}
-              >
-                Get Started
-                <IconArrowRight className="h-4 w-4 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
-              </Link>
-              <Link
-                href="/portfolio"
-                className="inline-flex w-fit items-center justify-center rounded-xl border border-zinc-300/80 bg-white/50 px-7 py-3.5 text-[15px] font-semibold text-zinc-800 transition-all duration-200 hover:border-zinc-400/90 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-zinc-300/60 focus:ring-offset-2 focus:ring-offset-[#f5f3ee]"
-              >
-                View Portfolio
-              </Link>
-            </div>
-
-            {/* Proof line — smaller, cleaner */}
-            <p
-              className="mt-6 text-[11px] font-medium tracking-wide text-zinc-500"
-              style={
-                inView
-                  ? { animation: "final-cta-reveal 0.6s cubic-bezier(0.22,1,0.36,1) 0.36s both" }
-                  : { opacity: 0 }
-              }
-            >
-              Clear process • Elevated presentation • Confident launch
-            </p>
-          </div>
+        <div
+          className="mt-10 flex flex-col items-center justify-center gap-3 sm:mt-11 sm:flex-row sm:gap-4"
+          style={reveal("0.28s", "0.7s")}
+        >
+          <Link
+            href="/login"
+            className="inline-flex w-full min-w-[200px] items-center justify-center rounded-md bg-amber-500 px-8 py-3.5 text-[15px] font-semibold text-white shadow-[0_4px_24px_-4px_rgba(245,158,11,0.55),0_0_0_1px_rgba(251,191,36,0.2)] transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-amber-400 hover:shadow-[0_8px_32px_-6px_rgba(245,158,11,0.5)] active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:w-auto"
+          >
+            Get Started
+          </Link>
+          <Link
+            href="/portfolio"
+            className="inline-flex w-full min-w-[200px] items-center justify-center rounded-md border border-white/90 bg-transparent px-8 py-3.5 text-[15px] font-semibold text-white transition duration-300 ease-out hover:-translate-y-0.5 hover:border-white hover:bg-white/[0.08] active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:w-auto"
+          >
+            View Portfolio
+          </Link>
         </div>
+
+        <ul
+          className="mt-14 flex flex-col items-center gap-4 sm:mt-16 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-10 sm:gap-y-3"
+          style={reveal("0.34s", "0.65s")}
+        >
+          {FEATURES.map((label, index) => (
+            <li
+              key={label}
+              className="flex items-center gap-2.5 text-sm text-zinc-400"
+              style={reveal(`${0.36 + index * 0.07}s`, "0.6s")}
+            >
+              <span
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-500/35 bg-amber-500/15 text-amber-400"
+                style={checkPop(index)}
+                aria-hidden
+              >
+                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+              </span>
+              {label}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

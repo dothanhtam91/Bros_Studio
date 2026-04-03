@@ -341,15 +341,69 @@ body {
   animation: workflow-connector-draw 1s ease-out 0.4s forwards;
 }
 
-/* Final CTA: editorial reveal */
+/* Final CTA: editorial reveal (blur clears for a soft entrance) */
 @keyframes final-cta-reveal {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(26px);
+    filter: blur(10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes final-cta-bg-drift {
+  0%,
+  100% {
+    transform: scale(1.06) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.1) translate(-0.4%, 0.2%);
+  }
+}
+
+.final-cta-bg-drift {
+  animation: final-cta-bg-drift 26s ease-in-out infinite;
+}
+
+@keyframes final-cta-amber-pulse {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.48;
+    transform: scale(1.03);
+  }
+}
+
+.final-cta-amber-pulse {
+  animation: final-cta-amber-pulse 9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .final-cta-bg-drift {
+    animation: none;
+    transform: scale(1.06);
+  }
+  .final-cta-amber-pulse {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+@keyframes final-cta-check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 

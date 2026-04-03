@@ -3,6 +3,11 @@
 import { useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { isStudioPortfolioCategorySlug } from "@/lib/portfolioCategories";
+import {
+  pickHeroSlideItems,
+  toHeroCategoryKey,
+  type PortfolioHeroCategoryKey,
+} from "@/lib/portfolioHeroConfig";
 import { PortfolioCinemaHero } from "./PortfolioCinemaHero";
 import { PortfolioZipFilters } from "./PortfolioZipFilters";
 import { PortfolioMasonryGrid } from "./PortfolioMasonryGrid";
@@ -26,13 +31,16 @@ export function PortfolioPageClient({ items }: { items: PortfolioItem[] }) {
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const heroSource = useMemo(() => {
+  const heroCategoryKey: PortfolioHeroCategoryKey = toHeroCategoryKey(currentType);
+
+  const heroSlides = useMemo(() => {
     if (items.length === 0) return [];
-    if (filteredItems.length > 0) {
-      return filteredItems.slice(0, Math.min(3, filteredItems.length));
-    }
-    return items.slice(0, Math.min(3, items.length));
-  }, [items, filteredItems]);
+    const filteredPool =
+      currentType && filteredItems.length === 0 ? items : filteredItems;
+    const pickKey: PortfolioHeroCategoryKey =
+      currentType && filteredItems.length === 0 ? "all" : heroCategoryKey;
+    return pickHeroSlideItems(items, filteredPool, pickKey, 3);
+  }, [items, filteredItems, currentType, heroCategoryKey]);
 
   const gridItems = filteredItems.length > 3 ? filteredItems.slice(3) : [];
 
@@ -56,7 +64,6 @@ export function PortfolioPageClient({ items }: { items: PortfolioItem[] }) {
   );
 
   const filterKey = currentType ?? "all";
-  const heroKey = heroSource.map((s) => s.src).join("|");
 
   if (!currentType && items.length === 0) {
     return (
@@ -78,8 +85,8 @@ export function PortfolioPageClient({ items }: { items: PortfolioItem[] }) {
       .slice(0, 6);
     return (
       <>
-        {heroSource.length > 0 && (
-          <PortfolioCinemaHero key={heroKey} items={heroSource} />
+        {heroSlides.length > 0 && (
+          <PortfolioCinemaHero categoryKey={heroCategoryKey} items={heroSlides} />
         )}
         <div className="bg-[#FAFAFA] text-[#0F1115]">
           <PortfolioZipFilters currentType={currentType} />
@@ -104,8 +111,8 @@ export function PortfolioPageClient({ items }: { items: PortfolioItem[] }) {
 
   return (
     <>
-      {heroSource.length > 0 && (
-        <PortfolioCinemaHero key={heroKey} items={heroSource} />
+      {heroSlides.length > 0 && (
+        <PortfolioCinemaHero categoryKey={heroCategoryKey} items={heroSlides} />
       )}
       <div className="bg-[#FAFAFA] text-[#0F1115] selection:bg-[#D4A853]/30">
         <PortfolioZipFilters currentType={currentType} />
