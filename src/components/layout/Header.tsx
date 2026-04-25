@@ -20,6 +20,13 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return;
+    }
+
     const supabase = createClient();
     const getSession = async () => {
       const { data: { user: u } } = await supabase.auth.getUser();

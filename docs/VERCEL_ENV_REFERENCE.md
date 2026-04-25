@@ -20,6 +20,7 @@ Use this when setting **Project → Settings → Environment Variables** in Verc
 | `R2_BUCKET_NAME` | Your R2 bucket name | Production, Preview, Development |
 | `R2_PUBLIC_URL` | Public read URL for R2 (e.g. `https://pub-xxx.r2.dev` or custom domain) | Production, Preview, Development |
 | `BROSTUDIO_FIRST_ADMIN_EMAIL` or `BROSTUDIO_ADMIN_EMAILS` | Admin email(s) — **secret** | Production, Preview, Development |
+| `LILBIN_CONTROL_TOKEN` | Shared secret for authenticated internal lil_Bin/OpenClaw control APIs — **secret** | Production, Preview, Development |
 
 ## Optional
 
@@ -31,9 +32,9 @@ Use this when setting **Project → Settings → Environment Variables** in Verc
 | `CONTACT_EMAIL` | Where contact form sends (defaults to hello@example.com) | Production, Preview, Development |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` or `GOOGLE_SERVICE_ACCOUNT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Portfolio sync — **secret** | Production only (if used) |
 
-## Do not set
+## Avoid unless you intentionally need legacy fallback
 
-- `ADMIN_CLAIM_SECRET` — deprecated (admin claim flow removed).
+- `ADMIN_CLAIM_SECRET` — legacy fallback only. Internal control routes prefer `LILBIN_CONTROL_TOKEN`; only use this if you deliberately want the same secret to work for both flows.
 
 ## After adding variables
 

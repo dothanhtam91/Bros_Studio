@@ -16,6 +16,7 @@ Luxury real estate photography delivery and client portal. Next.js (App Router),
    Copy `.env.local.example` to `.env.local` and set:
 
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `LILBIN_CONTROL_TOKEN` (for authenticated internal lil_Bin/OpenClaw control routes)
    - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
    - `RESEND_API_KEY` (optional, for booking/delivery/contact emails)
    - `NEXT_PUBLIC_APP_URL` (e.g. `http://localhost:3000`)
@@ -68,6 +69,21 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). Use **Book a shoot** for the public form, **Client login** for the portal, and **Admin** (e.g. `/admin`) when logged in as admin.
+
+## Internal lil_Bin control API
+
+A token-guarded internal control layer is available under `/api/internal/control/*` for local/automation use. Set `LILBIN_CONTROL_TOKEN` on the server, then send either `Authorization: Bearer <token>` or `x-lilbin-control-token: <token>`.
+
+Current endpoints:
+
+- `GET /api/internal/control/health`
+- `GET /api/internal/control/status`
+- `GET /api/internal/control/settings`
+- `GET /api/internal/control/jobs`
+- `PATCH /api/internal/control/jobs/:id`
+- `GET /api/internal/control/portfolio`
+- `GET /api/internal/control/portfolio/settings`
+- `PATCH /api/internal/control/portfolio/settings`
 
 ## Build
 
