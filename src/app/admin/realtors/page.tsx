@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AdminRealtorsList } from "@/components/admin/AdminRealtorsList";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminRealtorsPage() {
@@ -12,7 +13,7 @@ export default async function AdminRealtorsPage() {
 
   const { data: realtors } = await supabase
     .from("realtors")
-    .select("id, slug, name, brokerage")
+    .select("id, slug, name, brokerage, phone, email, created_at, updated_at, albums(count)")
     .order("name");
 
   return (
@@ -36,21 +37,7 @@ export default async function AdminRealtorsPage() {
         {!realtors?.length ? (
           <p className="mt-8 text-stone-500">No realtors yet. Add one to get started.</p>
         ) : (
-          <ul className="mt-8 space-y-3">
-            {realtors.map((r) => (
-              <li key={r.id}>
-                <Link
-                  href={`/admin/realtors/${r.id}`}
-                  className="block rounded-2xl border border-amber-200/50 bg-white p-4 shadow-sm shadow-amber-900/5 transition hover:border-amber-200 hover:shadow-md hover:shadow-amber-900/10"
-                >
-                  <p className="font-medium text-stone-900">{r.name}</p>
-                  <p className="text-sm text-stone-500">
-                    {r.brokerage ?? "—"} · /r/{r.slug}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <AdminRealtorsList realtors={realtors} />
         )}
       </div>
     </main>
